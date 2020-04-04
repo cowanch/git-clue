@@ -27,10 +27,3 @@ npm run lint
 
 ### Customize configuration
 See [Configuration Reference](https://cli.vuejs.org/config/).
-
-### Extensions for VS Code
-```
-- Vetur
-- ESLint
-- Vue 2 Snippets
-```
