@@ -1,5 +1,5 @@
 <template>
-  <g :transform="`translate(${coordX*cellSize}, ${coordY*cellSize})`">
+  <g :transform="getXYTranslation(coordX, coordY)">
     <!-- top border -->
     <line x1="0" y1="0" :x2="cellSize" y2="0"
           v-if="borders.top"/>
@@ -23,21 +23,16 @@ line {
 </style>
 
 <script>
+import coordinates from '@/mixins/coordinates.mixin';
+
 export default {
   name: 'SpaceBorder',
+  mixins: [coordinates],
   props: {
-    strokeWidth: {
-      type: Number,
-      default: 4,
-    },
     coordX: Number,
     coordY: Number,
     borders: {
       type: Object,
-      required: true
-    },
-    cellSize: {
-      type: Number,
       required: true
     }
   }

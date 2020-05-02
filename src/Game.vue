@@ -2,10 +2,16 @@
   The main game component. Handles the game logic and components.
 -->
 <template>
-  <div>
-    <board/>
-  </div>
+  <board/>
 </template>
+
+<style>
+html,
+body,
+body > div {
+  height: 100%;
+}
+</style>
 
 <script>
 import Board from '@/components/Board.vue';
