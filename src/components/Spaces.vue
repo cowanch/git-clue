@@ -3,40 +3,92 @@
 -->
 <template>
   <g>
-    <template v-for="(row, rowIdx) in layout">
-      <template v-for="(cell) in row">
-        <rect :width="cellSize"
-              :height="cellSize"
-              :key="`row-${rowIdx}-col-${cell.col}`"
-              :transform="getXYTranslation(cell.col, rowIdx)"/>
-        <space-border :key="`border-${rowIdx}-${cell.col}`"
-                      :coordX="cell.col"
-                      :coordY="rowIdx"
-                      :borders="cell.borders"
-                      :cellSize="cellSize"/>
-      </template>
-    </template>
+    <!-- Starting Space Markers -->
+    <circle :cx="cellSize/2" :cy="cellSize/2" :r="offset(1)"
+            :transform="getXYTranslation(16, offsetScale)"
+            fill="red"/>
+    <circle :cx="cellSize/2" :cy="cellSize/2" :r="offset(1)"
+            :transform="getXYTranslation(23-offsetScale, 7)"
+            fill="yellow"/>
+    <circle :cx="cellSize/2" :cy="cellSize/2" :r="offset(1)"
+            :transform="getXYTranslation(14, 24-offsetScale)"
+            fill="white"
+            stroke="black"/>
+    <circle :cx="cellSize/2" :cy="cellSize/2" :r="offset(1)"
+            :transform="getXYTranslation(9, 24-offsetScale)"
+            fill="green"/>
+    <circle :cx="cellSize/2" :cy="cellSize/2" :r="offset(1)"
+            :transform="getXYTranslation(offsetScale, 18)"
+            fill="blue"/>
+    <circle :cx="cellSize/2" :cy="cellSize/2" :r="offset(1)"
+            :transform="getXYTranslation(offsetScale, 5)"
+            fill="purple"/>
+    <!-- Grid Spaces -->
+    <g v-for="(cell) in spaces"
+       :key="`row-${cell.coordinates.y}-col-${cell.coordinates.x}`"
+       :transform="getCoordinatesTranslation(cell.coordinates)">
+      <!-- space square -->
+      <rect :width="cellSize" :height="cellSize"/>
+    </g>
+    <g v-for="(cell) in spaces"
+       :key="`row-${cell.coordinates.y}-col-${cell.coordinates.x}`"
+       :transform="getCoordinatesTranslation(cell.coordinates)">
+      <!-- top border -->
+      <line v-if="cell.borders.top"
+            v-bind="getBorderCoordinates('top')"/>
+      <!-- left border -->
+      <line v-if="cell.borders.left"
+            v-bind="getBorderCoordinates('left')"/>
+      <!-- bottom border -->
+      <line v-if="cell.borders.bottom"
+            v-bind="getBorderCoordinates('bottom')"/>
+      <!-- right border -->
+      <line v-if="cell.borders.right"
+            v-bind="getBorderCoordinates('right')"/>
+    </g>
   </g>
 </template>
 
 <script>
 import coordinates from '@/mixins/coordinates.mixin';
 import grid from '@/components/boardGrid.js'
-import SpaceBorder from '@/components/SpaceBorder';
 
 export default {
   name: 'Spaces',
   mixins: [coordinates],
   computed: {
-    layout () {
-      return grid;
-    },
-    numRows () {
-      return grid.length;
+    spaces () {
+      let spaces = [];
+      for (let rowIdx in grid) {
+        for (let cell of grid[rowIdx]) {
+          spaces.push({
+            coordinates: { x: cell.col, y: parseInt(rowIdx) },
+            borders: cell.borders
+          });
+        }
+      }
+      return spaces;
     }
   },
-  components: {
-    SpaceBorder
+  methods: {
+    getBorderCoordinates (direction) {
+      let coords = { x1: 0, x2: 0, y1: 0, y2: 0 };
+      if (direction === 'top' || direction === 'bottom') {
+        coords.x1 = -this.cellLineWidth / 2;
+        coords.x2 = this.cellSize + (this.cellLineWidth / 2);
+        if (direction === 'bottom') {
+          coords.y1 = coords.y2 = this.cellSize;
+        }
+      }
+      if (direction === 'left' || direction === 'right') {
+        coords.y1 = -this.cellLineWidth / 2;
+        coords.y2 = this.cellSize + (this.cellLineWidth / 2);
+        if (direction == 'right') {
+          coords.x1 = coords.x2 = this.cellSize;
+        }
+      }
+      return coords;
+    }
   }
 };
 </script>
