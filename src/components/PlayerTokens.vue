@@ -41,41 +41,37 @@ circle {
 
 <script>
 import coordinates from '@/mixins/coordinates.mixin';
+import rooms from '@/mixins/rooms.mixin';
 
 export default {
   name: 'PlayerTokens',
-  mixins: [coordinates],
-  data () {
-    return {
-      // Temporary data object - this will be passed in as a prop later
-      coordinates: {
-        scarlet: { x: 16, y: 0 },
-        mustard: { x: 23, y: 7 },
-        white: { x: 14, y: 24 },
-        green: { x: 9, y: 24 },
-        peacock: { x: 0, y: 18 },
-        plum: { x: 0, y: 5 }
-      }
-    };
+  mixins: [coordinates,rooms],
+  props: {
+    coordinates: {
+      type: Object,
+      required: true,
+      validator: (val) => val.hasOwnProperty('scarlet') && val.hasOwnProperty('mustard') && val.hasOwnProperty('white')
+                          && val.hasOwnProperty('green') && val.hasOwnProperty('peacock') && val.hasOwnProperty('plum')
+    }
   },
   computed: {
     scarlet () {
-      return this.coordinates.scarlet || null;
+      return this.boardCoordinates.scarlet || null;
     },
     mustard () {
-      return this.coordinates.mustard || null;
+      return this.boardCoordinates.mustard || null;
     },
     white () {
-      return this.coordinates.white || null;
+      return this.boardCoordinates.white || null;
     },
     green () {
-      return this.coordinates.green || null;
+      return this.boardCoordinates.green || null;
     },
     peacock () {
-      return this.coordinates.peacock || null;
+      return this.boardCoordinates.peacock || null;
     },
     plum () {
-      return this.coordinates.plum || null;
+      return this.boardCoordinates.plum || null;
     },
     tokenRadius () {
       return this.cellSize / 3;

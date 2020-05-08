@@ -25,13 +25,13 @@
             fill="purple"/>
     <!-- Grid Spaces -->
     <g v-for="(cell) in spaces"
-       :key="`row-${cell.coordinates.y}-col-${cell.coordinates.x}`"
+       :key="`cell-row-${cell.coordinates.y}-col-${cell.coordinates.x}`"
        :transform="getCoordinatesTranslation(cell.coordinates)">
       <!-- space square -->
       <rect :width="cellSize" :height="cellSize"/>
     </g>
     <g v-for="(cell) in spaces"
-       :key="`row-${cell.coordinates.y}-col-${cell.coordinates.x}`"
+       :key="`border-row-${cell.coordinates.y}-col-${cell.coordinates.x}`"
        :transform="getCoordinatesTranslation(cell.coordinates)">
       <!-- top border -->
       <line v-if="cell.borders.top"
@@ -51,11 +51,14 @@
 
 <script>
 import coordinates from '@/mixins/coordinates.mixin';
-import grid from '@/components/boardGrid.js'
+import grid from '@/specs/boardSpecs';
 
 export default {
   name: 'Spaces',
   mixins: [coordinates],
+  props: {
+    cellLineWidth: Number
+  },
   computed: {
     spaces () {
       let spaces = [];

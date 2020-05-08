@@ -15,7 +15,7 @@
       <line :x1="offset(7)" :x2="offset(7)" :y1="offset(1)" :y2="offset(4)"/>
       <line :x1="-borderWidth/2" :x2="offset(6)" :y1="offset(4)" :y2="offset(4)"/>
       <line :x1="0" :x2="0" :y1="0" :y2="offset(4)"/>
-      <text :x="offset(3.5)" :y="offset(2)">Study</text>
+      <text :x="offset(3)" :y="cell(2)">Study</text>
     </g>
     <!-- Library -->
     <g :transform="getXYTranslation(-offsetScale, 6)">
@@ -51,7 +51,7 @@
       <line :x1="offset(6)" :x2="offset(6)" :y1="cell(4)" :y2="cell(5)"/>
       <line :x1="-borderWidth/2" :x2="offset(6)+borderWidth/2" :y1="cell(5)" :y2="cell(5)"/>
       <line :x1="0" :x2="0" :y1="0" :y2="cell(5)"/>
-      <text :x="cell(3)" :y="cell(2.5)">Billiard Room</text>
+      <text :x="offset(2)" :y="cell(2)">Billiard Room</text>
     </g>
     <!-- Conservatory -->
     <g :transform="getXYTranslation(-offsetScale, 19)">
@@ -151,7 +151,7 @@
 </template>
 
 <script>
-import coordinates from '@/mixins/coordinates.mixin'
+import coordinates from '@/mixins/coordinates.mixin';
 
 export default {
   name: 'Rooms',

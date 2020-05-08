@@ -7,8 +7,10 @@
        :style="cssVars">
       <spaces v-bind="boardProps"/>
       <rooms v-bind="boardProps"/>
-      <player-tokens v-bind="boardProps"/>
-      <weapon-tokens v-bind="boardProps"/>
+      <player-tokens v-bind="boardProps"
+                     :coordinates="tokenCoordinates.players"/>
+      <weapon-tokens v-bind="boardProps"
+                     :coordinates="tokenCoordinates.weapons"/>
     </g>
   </svg>
 </template>
@@ -49,6 +51,13 @@ const BORDER_WIDTH = 4;
 
 export default {
   name: 'Board',
+  props: {
+    tokenCoordinates: {
+      type: Object,
+      required: true,
+      validator: (val) => val.hasOwnProperty('players') && val.hasOwnProperty('weapons')
+    }
+  },
   computed: {
     boardProps () {
       return {

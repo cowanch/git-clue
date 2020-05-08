@@ -11,7 +11,7 @@
          :width="tokenWidth"
          :height="tokenHeight"
          href="@/assets/tokens/weapons.svg#knife"
-         :transform="getCoordinatesTranslation(knife)"/>
+         :transform="`${getCoordinatesTranslation(knife)} ${rotate90}`"/>
     <!-- Pipe -->
     <use v-if="pipe && isCoordinates(pipe)"
          :width="tokenWidth"
@@ -23,7 +23,7 @@
          :width="tokenWidth"
          :height="tokenHeight"
          href="@/assets/tokens/weapons.svg#revolver"
-         :transform="getCoordinatesTranslation(revolver)"/>
+         :transform="`${getCoordinatesTranslation(revolver)} ${rotate90}`"/>
     <!-- Rope -->
     <use v-if="rope && isCoordinates(rope)"
          :width="tokenWidth"
@@ -41,47 +41,46 @@
 
 <script>
 import coordinates from '@/mixins/coordinates.mixin';
+import rooms from '@/mixins/rooms.mixin';
 
 export default {
   name: 'WeaponTokens',
-  mixins: [coordinates],
-  data () {
-    return {
-      // Temporary data object - this will be passed in as a prop later
-      coordinates: {
-        candlestick: { x: 1, y: 21 },
-        knife: { x: 18, y: 1 },
-        pipe: { x: 22, y: 20 },
-        revolver: { x: 22, y: 11 },
-        rope: { x: 10, y: 1 },
-        wrench: { x: 1, y: 1 }
-      }
-    };
+  mixins: [coordinates,rooms],
+  props: {
+    coordinates: {
+      type: Object,
+      required: true,
+      validator: (val) => val.hasOwnProperty('candlestick') && val.hasOwnProperty('knife') && val.hasOwnProperty('pipe')
+                          && val.hasOwnProperty('revolver') && val.hasOwnProperty('rope') && val.hasOwnProperty('wrench')
+    }
   },
   computed: {
+    candlestick () {
+      return this.boardCoordinates.candlestick || null;
+    },
+    knife () {
+      return this.boardCoordinates.knife || null;
+    },
+    pipe () {
+      return this.boardCoordinates.pipe || null;
+    },
+    revolver () {
+      return this.boardCoordinates.revolver || null;
+    },
+    rope () {
+      return this.boardCoordinates.rope || null;
+    },
+    wrench () {
+      return this.boardCoordinates.wrench || null;
+    },
     tokenHeight () {
       return this.cellSize * 2;
     },
     tokenWidth () {
       return this.cellSize;
     },
-    candlestick () {
-      return this.coordinates.candlestick || null;
-    },
-    knife () {
-      return this.coordinates.knife || null;
-    },
-    pipe () {
-      return this.coordinates.pipe || null;
-    },
-    revolver () {
-      return this.coordinates.revolver || null;
-    },
-    rope () {
-      return this.coordinates.rope || null;
-    },
-    wrench () {
-      return this.coordinates.wrench || null;
+    rotate90 () {
+      return `translate(${this.tokenHeight/2}, 0) rotate(90 ${this.tokenWidth/2} ${this.tokenHeight/4})`;
     }
   }
 };
