@@ -28,7 +28,8 @@
        :key="`cell-row-${cell.coordinates.y}-col-${cell.coordinates.x}`"
        :transform="getCoordinatesTranslation(cell.coordinates)">
       <!-- space square -->
-      <rect :width="cellSize" :height="cellSize"/>
+      <rect :class="{ highlight: isSpaceAvailableToMove(cell.coordinates) }"
+            :width="cellSize" :height="cellSize"/>
     </g>
     <g v-for="(cell) in spaces"
        :key="`border-row-${cell.coordinates.y}-col-${cell.coordinates.x}`"
@@ -57,7 +58,8 @@ export default {
   name: 'Spaces',
   mixins: [coordinates],
   props: {
-    cellLineWidth: Number
+    cellLineWidth: Number,
+    availableMoves: Object
   },
   computed: {
     spaces () {
@@ -91,6 +93,9 @@ export default {
         }
       }
       return coords;
+    },
+    isSpaceAvailableToMove (coordinates) {
+      return this.availableMoves.hasOwnProperty(coordinates.x) && this.availableMoves[coordinates.x].hasOwnProperty(coordinates.y);
     }
   }
 };

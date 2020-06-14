@@ -5,8 +5,10 @@
   <svg height="100%" width="100%">
     <g :transform="`translate(${cellSize}, ${cellSize})`"
        :style="cssVars">
-      <spaces v-bind="boardProps"/>
-      <rooms v-bind="boardProps"/>
+      <spaces v-bind="boardProps"
+              :available-moves="availableMoves"/>
+      <rooms v-bind="boardProps"
+             :available-moves="availableMoves"/>
       <player-tokens v-bind="boardProps"
                      :coordinates="tokenCoordinates.players"/>
       <weapon-tokens v-bind="boardProps"
@@ -18,6 +20,10 @@
 <style>
 rect, polygon, path {
   fill: white;
+}
+
+.highlight {
+  fill: #00FFFF;
 }
 
 line, path {
@@ -56,6 +62,9 @@ export default {
       type: Object,
       required: true,
       validator: (val) => val.hasOwnProperty('players') && val.hasOwnProperty('weapons')
+    },
+    availableMoves: {
+      type: Object
     }
   },
   computed: {
