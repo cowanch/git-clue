@@ -14,7 +14,7 @@ export default {
   },
   methods: {
     isCoordinates (obj) {
-      return obj.hasOwnProperty('x') && obj.hasOwnProperty('y');
+      return obj && obj.hasOwnProperty ? obj.hasOwnProperty('x') && obj.hasOwnProperty('y') : false;
     },
     getCoordinatesTranslation (coords) {
       return this.isCoordinates(coords) ? this.getXYTranslation(coords.x, coords.y) : '';

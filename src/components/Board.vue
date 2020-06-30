@@ -2,7 +2,7 @@
   The board model. This will keep track of spaces and rooms on the board, as well as rendering where each player is located
 -->
 <template>
-  <svg height="100%" width="100%">
+  <svg height="100%" width="50%">
     <g :transform="`translate(${cellSize}, ${cellSize})`"
        :style="cssVars">
       <spaces v-bind="boardProps"

@@ -2,8 +2,13 @@
   The main game component. Handles the game logic and components.
 -->
 <template>
-  <board :token-coordinates="tokenCoordinates"
-         :available-moves="availableMoves"/>
+  <div class="css-container">
+    <board :token-coordinates="tokenCoordinates"
+           :available-moves="availableMoves"/>
+    <player-select v-if="selectingPlayers"
+                   v-model="playerSelections"
+                   @finish="selectingPlayers=false"/>
+  </div>
 </template>
 
 <style>
@@ -12,10 +17,15 @@ body,
 body > div {
   height: 100%;
 }
+
+.css-container {
+  display: flex;
+}
 </style>
 
 <script>
-import Board from '@/components/Board.vue';
+import Board from '@/components/Board';
+import PlayerSelect from '@/components/PlayerSelect';
 import playerPositions from '@/specs/startingPositions';
 import grid from '@/specs/boardSpecs';
 
@@ -39,8 +49,17 @@ export default {
         rope: 'hall',
         wrench: 'study'
       },
+      playerSelections: {
+        scarlet: 'disabled',
+        mustard: 'disabled',
+        white: 'disabled',
+        green: 'disabled',
+        peacock: 'disabled',
+        plum: 'disabled'
+      },
       currentTurn: -1,
-      dieRoll: 0
+      dieRoll: 0,
+      selectingPlayers: true
     };
   },
   computed: {
@@ -92,7 +111,6 @@ export default {
     }
   },
   created () {
-    Object.keys(this.playerCoordinates).forEach(player => this.playerCoordinates[player] = playerPositions[player]);
     this.currentTurn = 0;
   },
   methods: {
@@ -182,10 +200,19 @@ export default {
       } else if (turn < 0) {
         turn = this.turnOrder.length-1;
       }
+    },
+    playerSelections: {
+      handler (selected) {
+        if (this.selectingPlayers) {
+          Object.keys(this.playerCoordinates).forEach(player => this.playerCoordinates[player] = selected[player] !== 'disabled' ? playerPositions[player] : null);
+        }
+      },
+      deep: true
     }
   },
   components: {
-    Board
+    Board,
+    PlayerSelect
   }
 };
 </script>
