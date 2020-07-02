@@ -8,6 +8,14 @@
     <player-select v-if="selectingPlayers"
                    v-model="playerSelections"
                    @finish="selectingPlayers=false"/>
+    <player-panel v-else/>
+    <!--
+      player cards
+      player notepad
+      dice
+      - options
+      -
+    -->
   </div>
 </template>
 
@@ -24,8 +32,11 @@ body > div {
 </style>
 
 <script>
+// Components
 import Board from '@/components/Board';
 import PlayerSelect from '@/components/PlayerSelect';
+import PlayerPanel from '@/components/PlayerCards';
+// Specs
 import playerPositions from '@/specs/startingPositions';
 import grid from '@/specs/boardSpecs';
 
@@ -212,7 +223,8 @@ export default {
   },
   components: {
     Board,
-    PlayerSelect
+    PlayerSelect,
+    PlayerPanel
   }
 };
 </script>
