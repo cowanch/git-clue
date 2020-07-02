@@ -13,7 +13,8 @@
 </style>
 
 <script>
-import cardDimensions from '@/specs/cardSpecs';
+import {cardDimensions} from '@/specs/cardSpecs';
+
 export default {
   name: 'Card',
   props: {

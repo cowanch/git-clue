@@ -39,6 +39,9 @@ import PlayerPanel from '@/components/PlayerCards';
 // Specs
 import playerPositions from '@/specs/startingPositions';
 import grid from '@/specs/boardSpecs';
+import {deck} from '@/specs/cardSpecs';
+// Utils
+import shuffle from '@/utils/shuffle';
 
 export default {
   name: 'Game',
@@ -70,7 +73,16 @@ export default {
       },
       currentTurn: -1,
       dieRoll: 0,
-      selectingPlayers: true
+      selectingPlayers: true,
+      envelope: {},
+      playerCards: {
+        scarlet: [],
+        mustard: [],
+        white: [],
+        green: [],
+        peacock: [],
+        plum: []
+      }
     };
   },
   computed: {
@@ -202,6 +214,23 @@ export default {
     },
     isPlayerOnPosition (position) {
       return Object.values(this.playerCoordinates).some(playerPosition => position.x === playerPosition.x && position.y === playerPosition.y);
+    },
+    getRemainingDeckAfterPickingEnvelopeCards () {
+      let suspectDeck = shuffle(Object.keys(deck.suspects));
+      let weaponDeck = shuffle(Object.keys(deck.weapons));
+      let roomDeck = shuffle(Object.keys(deck.rooms));
+      this.envelope.suspect = suspectDeck.shift();
+      this.envelope.weapon = weaponDeck.shift();
+      this.envelope.room = roomDeck.shift();
+
+      return [...suspectDeck, ...weaponDeck, ...roomDeck];
+    },
+    dealCardsToPlayers (deck) {
+      // This method assumes a shuffled deck
+      let playerCount = this.turnOrder.length;
+      deck.forEach((card, index) => {
+        this.playerCards[this.turnOrder[index % playerCount]].push(card);
+      });
     }
   },
   watch: {
@@ -219,6 +248,13 @@ export default {
         }
       },
       deep: true
+    },
+    selectingPlayers (isSelecting) {
+      if (!isSelecting) {
+        let deck = shuffle(this.getRemainingDeckAfterPickingEnvelopeCards());
+        this.dealCardsToPlayers(deck);
+        console.log(this.playerCards);
+      }
     }
   },
   components: {

@@ -20,7 +20,7 @@
 
 <script>
 import Card from '@/components/Card';
-import cardDimensions from '@/specs/cardSpecs';
+import {cardDimensions} from '@/specs/cardSpecs';
 
 export default {
   name: 'PlayerCards',
