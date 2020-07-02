@@ -8,7 +8,8 @@
     <player-select v-if="selectingPlayers"
                    v-model="playerSelections"
                    @finish="selectingPlayers=false"/>
-    <player-panel v-else/>
+    <player-panel v-else
+                  :cards="playerCards[turnPlayer]"/>
     <!--
       player cards
       player notepad
@@ -94,6 +95,9 @@ export default {
     },
     turnOrder () {
       return Object.keys(this.playerCoordinates).filter(player => !!this.playerCoordinates[player]);
+    },
+    turnPlayer () {
+      return this.turnOrder[this.currentTurn];
     },
     availableMoves () {
       let availableMoves = {};

@@ -1,9 +1,10 @@
 <template>
   <div class="css-panel"
        :style="{width:widthPx, height:heightPx}">
-    <card :size="cardScale"/>
-    <card :size="cardScale" class="css-middle-card"/>
-    <card :size="cardScale"/>
+    <card v-for="(card) in cards"
+          :key="card"
+          :size="cardScale"
+          :id="card"/>
   </div>
 </template>
 
@@ -24,9 +25,12 @@ import {cardDimensions} from '@/specs/cardSpecs';
 
 export default {
   name: 'PlayerCards',
+  props: {
+    cards: Array
+  },
   data () {
     return {
-      cardScale: 1
+      cardScale: 2
     };
   },
   computed: {

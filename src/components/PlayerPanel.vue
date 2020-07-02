@@ -1,6 +1,6 @@
 <template>
   <div>
-    <player-cards/>
+    <player-cards :cards="cards"/>
   </div>
 </template>
 
@@ -9,6 +9,9 @@ import PlayerCards from '@/components/PlayerCards';
 
 export default {
   name: 'PlayerPanel',
+  props: {
+    cards: Array
+  },
   components: {
     PlayerCards
   }

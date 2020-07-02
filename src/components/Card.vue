@@ -1,7 +1,7 @@
 <template>
   <div class="css-card"
        :style="{width:widthPx, height:heightPx}">
-    <p>Col. Mustard</p>
+    <p>{{cardText}}</p>
   </div>
 </template>
 
@@ -13,7 +13,7 @@
 </style>
 
 <script>
-import {cardDimensions} from '@/specs/cardSpecs';
+import {cardDimensions, deck} from '@/specs/cardSpecs';
 
 export default {
   name: 'Card',
@@ -21,9 +21,13 @@ export default {
     size: {
       type: Number,
       default: 1
-    }
+    },
+    id: String
   },
   computed: {
+    cardText () {
+      return deck.suspects[this.id] || deck.weapons[this.id] || deck.rooms[this.id] || '';
+    },
     widthPx () {
       return `${cardDimensions.width * this.size}px`;
     },
