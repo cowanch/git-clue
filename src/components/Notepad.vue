@@ -17,7 +17,10 @@
       </tr>
       <tr v-for="(name, key) in suspects"
           :key="key">
-        <td class="css-name-col">{{name}}</td>
+        <td class="css-name-col"
+            @click="toggleNameState(key)">
+          <span :class="getNameTextClass(key)">{{name}}</span>
+        </td>
         <td v-for="(player, pkey) in notepad"
             :key="`${pkey}-${key}`"
             class="css-input-box">
@@ -29,7 +32,10 @@
       </tr>
       <tr v-for="(name, key) in weapons"
           :key="key">
-        <td class="css-name-col">{{name}}</td>
+        <td class="css-name-col"
+            @click="toggleNameState(key)">
+          <span :class="getNameTextClass(key)">{{name}}</span>
+        </td>
         <td v-for="(player, pkey) in notepad"
             :key="`${pkey}-${key}`"
             class="css-input-box">
@@ -41,7 +47,10 @@
       </tr>
       <tr v-for="(name, key) in rooms"
           :key="key">
-        <td class="css-name-col">{{name}}</td>
+        <td class="css-name-col"
+            @click="toggleNameState(key)">
+          <span :class="getNameTextClass(key)">{{name}}</span>
+        </td>
         <td v-for="(player, pkey) in notepad"
             :key="`${pkey}-${key}`"
             class="css-input-box">
@@ -66,9 +75,15 @@ input {
   text-align: center;
   padding: inherit;
 }
+td.css-name-col {
+  cursor: pointer;
+}
+td.css-name-col:hover {
+  background-color: lightblue;
+}
 .css-name-col {
   width: 218px;
-  padding: 2px 0px;
+  padding: 2px 0px 2px 3%;
 }
 .css-category-row > td, th {
   font-size: 20px;
@@ -78,10 +93,39 @@ input {
   width: 40px;
   text-align: center;
 }
+.css-cross-out,
+.css-circle-over {
+  position: relative;
+}
+.css-cross-out::after {
+  border-bottom: 0.125em solid black;
+  content: "";
+  left: 0;
+  margin-top: calc(0.125em / 2 * -1);
+  position: absolute;
+  right: 0;
+  top: 50%;
+}
+.css-circle-over::after {
+  border: 0.125em solid black;
+  border-radius: 50%;
+  content: "";
+  top: -10%;
+  bottom: -10%;
+  left: -10%;
+  right: -10%;
+  position: absolute;
+}
 </style>
 
 <script>
 import {deck} from '@/specs/cardSpecs';
+
+const NAME_STATES = Object.freeze({
+  'NONE': '',
+  'CROSSED': 'crossed',
+  'CIRCLED': 'circled'
+});
 
 export default {
   name: 'Notepad',
@@ -94,7 +138,8 @@ export default {
         p4: {},
         p5: {},
         p6: {}
-      }
+      },
+      nameState: {}
     };
   },
   computed: {
@@ -113,14 +158,36 @@ export default {
       this.$set(player, 'name', '');
       Object.keys(this.suspects).forEach(suspect => {
         this.$set(player, suspect, '');
+        if (!this.nameState.hasOwnProperty(suspect)) {
+          this.$set(this.nameState, suspect, '');
+        }
       });
       Object.keys(this.weapons).forEach(weapon => {
         this.$set(player, weapon, '');
+        if (!this.nameState.hasOwnProperty(weapon)) {
+          this.$set(this.nameState, weapon, 'crossed');
+        }
       });
       Object.keys(this.rooms).forEach(room => {
         this.$set(player, room, '');
+        if (!this.nameState.hasOwnProperty(room)) {
+          this.$set(this.nameState, room, 'circled');
+        }
       });
     });
+  },
+  methods: {
+    toggleNameState (key) {
+      let stateValues = Object.values(NAME_STATES);
+      let index = stateValues.findIndex(state => state === this.nameState[key]);
+      this.nameState[key] = stateValues[++index % stateValues.length];
+    },
+    getNameTextClass (key) {
+      return {
+        'css-cross-out': this.nameState[key] === NAME_STATES.CROSSED,
+        'css-circle-over': this.nameState[key] === NAME_STATES.CIRCLED
+      };
+    }
   }
 };
 </script>
