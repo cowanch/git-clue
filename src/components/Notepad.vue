@@ -165,13 +165,13 @@ export default {
       Object.keys(this.weapons).forEach(weapon => {
         this.$set(player, weapon, '');
         if (!this.nameState.hasOwnProperty(weapon)) {
-          this.$set(this.nameState, weapon, 'crossed');
+          this.$set(this.nameState, weapon, '');
         }
       });
       Object.keys(this.rooms).forEach(room => {
         this.$set(player, room, '');
         if (!this.nameState.hasOwnProperty(room)) {
-          this.$set(this.nameState, room, 'circled');
+          this.$set(this.nameState, room, '');
         }
       });
     });
