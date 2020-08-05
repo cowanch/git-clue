@@ -1,6 +1,10 @@
 <template>
   <div>
     <div class="tab">
+      <button :class="getActiveTabClass('game')"
+              @click="setActiveTab('game')">
+        Game
+      </button>
       <button :class="getActiveTabClass('notepad')"
               @click="setActiveTab('notepad')">
         Notepad
@@ -10,6 +14,7 @@
         Cards
       </button>
     </div>
+    <game-panel v-show="isTabOpen('game')"/>
     <notepad v-show="isTabOpen('notepad')"/>
     <player-cards v-show="isTabOpen('cards')"
                   :cards="cards"/>
@@ -45,6 +50,7 @@
 <script>
 import PlayerCards from '@/components/PlayerCards';
 import Notepad from '@/components/Notepad';
+import GamePanel from '@/components/GamePanel';
 
 export default {
   name: 'PlayerPanel',
@@ -53,7 +59,7 @@ export default {
   },
   data () {
     return {
-      openTab: 'notepad'
+      openTab: 'cards'
     };
   },
   methods: {
@@ -71,7 +77,8 @@ export default {
   },
   components: {
     PlayerCards,
-    Notepad
+    Notepad,
+    GamePanel
   }
 };
 </script>
