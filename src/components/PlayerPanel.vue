@@ -1,6 +1,6 @@
 <template>
   <div>
-    <div class="tab">
+    <div class="css-tab">
       <button :class="getActiveTabClass('game')"
               @click="setActiveTab('game')">
         Game
@@ -22,13 +22,13 @@
 </template>
 
 <style scoped>
-.tab {
+.css-tab {
   overflow: hidden;
   border: 1px solid #ccc;
   background-color: #f1f1f1;
 }
 /* Style the buttons that are used to open the tab content */
-.tab button {
+.css-tab button {
   background-color: inherit;
   float: left;
   border: none;
@@ -38,11 +38,11 @@
   transition: 0.3s;
 }
 /* Change background color of buttons on hover */
-.tab button:hover {
+.css-tab button:hover {
   background-color: #ddd;
 }
 /* Create an active/current tablink class */
-.tab button.active {
+.css-tab button.active {
   background-color: #ccc;
 }
 </style>

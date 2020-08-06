@@ -5,8 +5,8 @@
   <div class="css-container">
     <board :token-coordinates="tokenCoordinates"
            :available-moves="availableMoves"/>
-    <div>
       <player-select v-if="selectingPlayers"
+    <div class="css-options">
                      v-model="playerSelections"
                      @finish="selectingPlayers=false"/>
       <player-panel v-else
@@ -24,6 +24,10 @@ body > div {
 
 .css-container {
   display: flex;
+}
+
+.css-options {
+  width: 50%;
 }
 </style>
 
