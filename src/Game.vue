@@ -10,7 +10,8 @@
                      v-model="playerSelections"
                      @finish="selectingPlayers=false"/>
       <player-panel v-else
-                    :cards="playerCards[turnPlayer]"/>
+                    :cards="playerCards[turnPlayer]"
+                    @die-rolled="setDieRoll"/>
     </div>
   </div>
 </template>
@@ -216,7 +217,7 @@ export default {
       return path.some(pathRoom => room === pathRoom);
     },
     isPlayerOnPosition (position) {
-      return Object.values(this.playerCoordinates).some(playerPosition => position.x === playerPosition.x && position.y === playerPosition.y);
+      return Object.values(this.playerCoordinates).some(playerPosition => playerPosition !== null && position.x === playerPosition.x && position.y === playerPosition.y);
     },
     getRemainingDeckAfterPickingEnvelopeCards () {
       let suspectDeck = shuffle(Object.keys(deck.suspects));
@@ -234,6 +235,9 @@ export default {
       deck.forEach((card, index) => {
         this.playerCards[this.turnOrder[index % playerCount]].push(card);
       });
+    },
+    setDieRoll (roll) {
+      this.dieRoll = roll;
     }
   },
   watch: {

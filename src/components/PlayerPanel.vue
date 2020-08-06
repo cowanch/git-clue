@@ -14,7 +14,8 @@
         Cards
       </button>
     </div>
-    <game-panel v-show="isTabOpen('game')"/>
+    <game-panel v-show="isTabOpen('game')"
+                @die-rolled="roll => $emit('die-rolled', roll)"/>
     <notepad v-show="isTabOpen('notepad')"/>
     <player-cards v-show="isTabOpen('cards')"
                   :cards="cards"/>
