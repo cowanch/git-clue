@@ -5,8 +5,8 @@
   <div class="css-container">
     <board :token-coordinates="tokenCoordinates"
            :available-moves="availableMoves"/>
-      <player-select v-if="selectingPlayers"
     <div class="css-options">
+      <player-select v-if="selectingPlayers"
                      v-model="playerSelections"
                      @finish="selectingPlayers=false"/>
       <player-panel v-else
