@@ -6,7 +6,8 @@
 <template>
   <g>
     <!-- Study -->
-    <g :transform="getXYTranslation(-offsetScale, -offsetScale)">
+    <g :transform="getXYTranslation(-offsetScale, -offsetScale)"
+       @click="$emit('click', 'study')">
       <polygon :points="`0,0 ${offset(6)},0 ${offset(6)},${offset(1)} ${offset(7)},${offset(1)} ${offset(7)},${offset(4)} 0,${offset(4)}`"
                :class="{ highlight: isAvailableMove('study') }"/>
       <line class="door" :x1="offset(6)" :x2="offset(7)" :y1="offset(4)" :y2="offset(4)"/>
@@ -19,7 +20,8 @@
       <text :x="offset(3)" :y="cell(2)">Study</text>
     </g>
     <!-- Library -->
-    <g :transform="getXYTranslation(-offsetScale, 6)">
+    <g :transform="getXYTranslation(-offsetScale, 6)"
+       @click="$emit('click', 'library')">
       <polygon :points="`${offset(1)},0 ${offset(6)},0 ${offset(6)},${cell(1)} ${offset(7)},${cell(1)} ${offset(7)},${cell(4)}
                         ${offset(6)},${cell(4)} ${offset(6)},${cell(5)} ${offset(1)},${cell(5)} ${offset(1)},${cell(4)} 0,${cell(4)}
                         0,${cell(1)} ${offset(1)},${cell(1)}`"
@@ -43,7 +45,8 @@
       <text :x="cell(3.5)" :y="cell(2.5)">Library</text>
     </g>
     <!-- Billiard Room -->
-    <g :transform="getXYTranslation(-offsetScale, 12)">
+    <g :transform="getXYTranslation(-offsetScale, 12)"
+       @click="$emit('click', 'billiard')">
       <polygon :points="`0,0 ${offset(6)},0 ${offset(6)},${cell(5)} 0,${cell(5)}`"
                :class="{ highlight: isAvailableMove('billiard') }"/>
       <line class="door" :x1="offset(1)" :x2="offset(2)" :y1="0" :y2="0"/>
@@ -57,7 +60,8 @@
       <text :x="offset(2)" :y="cell(2)">Billiard Room</text>
     </g>
     <!-- Conservatory -->
-    <g :transform="getXYTranslation(-offsetScale, 19)">
+    <g :transform="getXYTranslation(-offsetScale, 19)"
+       @click="$emit('click', 'conservatory')">
       <polygon :points="`${offset(1)},0 ${offset(5)},0 ${offset(5)},${cell(1)} ${offset(6)},${cell(1)} ${offset(6)},${offset(5)}
                         0,${offset(5)} 0,${cell(1)} ${offset(1)},${cell(1)}`"
                :class="{ highlight: isAvailableMove('conservatory') }"/>
@@ -72,7 +76,8 @@
       <text :x="cell(3)" :y="cell(3)">Conservatory</text>
     </g>
     <!-- Ballroom -->
-    <g :transform="getXYTranslation(8, 17)">
+    <g :transform="getXYTranslation(8, 17)"
+       @click="$emit('click', 'ballroom')">
       <polygon :points="`0,0 ${cell(8)},0 ${cell(8)},${cell(6)} ${cell(6)},${cell(6)} ${cell(6)},${offset(7)} ${cell(2)},${offset(7)}
                         ${cell(2)},${cell(6)} 0,${cell(6)}`"
                :class="{ highlight: isAvailableMove('ballroom') }"/>
@@ -96,7 +101,8 @@
       <text :x="cell(4)" :y="cell(2.5)">Ballroom</text>
     </g>
     <!-- Kitchen -->
-    <g :transform="getXYTranslation(18, 18)">
+    <g :transform="getXYTranslation(18, 18)"
+       @click="$emit('click', 'kitchen')">
       <polygon :points="`0,0 ${cell(5)},0 ${cell(5)},${cell(1)} ${offset(6)},${cell(1)} ${offset(6)},${offset(6)} 0,${offset(6)}`"
                :class="{ highlight: isAvailableMove('kitchen') }"/>
       <line class="door" :x1="cell(1)" :x2="cell(2)" :y1="0" :y2="0"/>
@@ -110,7 +116,8 @@
       <text :x="cell(3)" :y="cell(3)">Kitchen</text>
     </g>
     <!-- Dining Room -->
-    <g :transform="getXYTranslation(16, 9)">
+    <g :transform="getXYTranslation(16, 9)"
+       @click="$emit('click', 'dining')">
       <polygon :points="`0,0 ${offset(8)},0 ${offset(8)},${cell(7)} ${cell(3)},${cell(7)} ${cell(3)},${cell(6)} 0,${cell(6)}`"
                :class="{ highlight: isAvailableMove('dining') }"/>
       <line class="door" :x1="cell(1)" :x2="cell(2)" :y1="0" :y2="0"/>
@@ -126,7 +133,8 @@
       <text :x="cell(4.5)" :y="cell(3)">Dining Room</text>
     </g>
     <!-- Lounge -->
-    <g :transform="getXYTranslation(17, -offsetScale)">
+    <g :transform="getXYTranslation(17, -offsetScale)"
+       @click="$emit('click', 'lounge')">
       <polygon :points="`${cell(1)},0 ${offset(7)},0 ${offset(7)},${offset(6)} 0,${offset(6)} 0,${offset(1)} ${cell(1)},${offset(1)}`"
                :class="{ highlight: isAvailableMove('lounge') }"/>
       <line class="door" :x1="0" :x2="cell(1)" :y1="offset(6)" :y2="offset(6)"/>

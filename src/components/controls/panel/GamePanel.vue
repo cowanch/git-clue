@@ -2,7 +2,7 @@
   <div>
     <die :value="dieValue"/>
     <button @click="rollDie"
-            :disabled="dieValue>0">
+            :disabled="rollDisabled">
       Roll Die
     </button>
   </div>
@@ -10,15 +10,24 @@
 
 <script>
 import Die from '@/components/pieces/Die';
+import {phases} from '@/specs/turnSpecs';
 
 const ROLLS = 5;
 
 export default {
   name: 'GamePanel',
+  props: {
+    turnPhase: String
+  },
   data () {
     return {
       dieValue: 0
     };
+  },
+  computed: {
+    rollDisabled () {
+      return this.turnPhase !== phases.ROLL;
+    }
   },
   methods: {
     rollDie () {
@@ -32,6 +41,13 @@ export default {
         }, 100);
       } else {
         this.$emit('die-rolled', this.dieValue);
+      }
+    }
+  },
+  watch: {
+    turnPhase (phase) {
+      if (phase === phases.ROLL) {
+        this.dieValue = 0;
       }
     }
   },

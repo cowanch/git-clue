@@ -4,14 +4,16 @@
 <template>
   <div class="css-container">
     <board :token-coordinates="tokenCoordinates"
-           :available-moves="availableMoves"/>
+           :available-moves="availableMoves"
+           @move="movePhase"/>
     <div class="css-options">
       <player-select v-if="selectingPlayers"
                      v-model="playerSelections"
                      @finish="selectingPlayers=false"/>
       <player-panel v-else
                     :cards="playerCards[turnPlayer]"
-                    @die-rolled="setDieRoll"/>
+                    :turn-phase="turnPhase"
+                    @die-rolled="rollPhase"/>
     </div>
   </div>
 </template>
@@ -41,6 +43,7 @@ import PlayerPanel from '@/components/controls/PlayerPanel';
 import playerPositions from '@/specs/startingPositions';
 import grid from '@/specs/boardSpecs';
 import {deck} from '@/specs/cardSpecs';
+import {phases} from '@/specs/turnSpecs';
 // Utils
 import shuffle from '@/utils/shuffle';
 
@@ -83,7 +86,8 @@ export default {
         green: [],
         peacock: [],
         plum: []
-      }
+      },
+      turnPhase: phases.ROLL
     };
   },
   computed: {
@@ -236,17 +240,33 @@ export default {
         this.playerCards[this.turnOrder[index % playerCount]].push(card);
       });
     },
-    setDieRoll (roll) {
-      this.dieRoll = roll;
+    rollPhase (roll) {
+      if (this.turnPhase === phases.ROLL) {
+        this.dieRoll = roll;
+        this.turnPhase = phases.MOVE;
+      }
+    },
+    movePhase (moveTo) {
+      if (this.turnPhase === phases.MOVE) {
+        this.movePlayerTo(this.turnPlayer, moveTo);
+        this.dieRoll = 0;
+        this.currentTurn++;
+      }
+    },
+    movePlayerTo (player, moveTo) {
+      if (this.playerCoordinates.hasOwnProperty(player)) {
+        this.playerCoordinates[player] = moveTo;
+      }
     }
   },
   watch: {
     currentTurn (turn) {
       if (turn > this.turnOrder.length-1) {
-        turn = 0;
+        this.currentTurn = 0;
       } else if (turn < 0) {
-        turn = this.turnOrder.length-1;
+        this.currentTurn = this.turnOrder.length-1;
       }
+      this.turnPhase = phases.ROLL;
     },
     playerSelections: {
       handler (selected) {

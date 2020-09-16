@@ -15,6 +15,7 @@
       </button>
     </div>
     <game-panel v-show="isTabOpen('game')"
+                :turn-phase="turnPhase"
                 @die-rolled="roll => $emit('die-rolled', roll)"/>
     <notepad v-show="isTabOpen('notepad')"/>
     <player-cards v-show="isTabOpen('cards')"
@@ -56,7 +57,8 @@ import GamePanel from '@/components/controls/panel/GamePanel';
 export default {
   name: 'PlayerPanel',
   props: {
-    cards: Array
+    cards: Array,
+    turnPhase: String
   },
   data () {
     return {
