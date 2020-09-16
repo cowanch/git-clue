@@ -4,13 +4,16 @@
 <template>
   <div class="css-container">
     <board :token-coordinates="tokenCoordinates"
-           :available-moves="availableMoves"/>
-    <div>
+           :available-moves="availableMoves"
+           @move="movePhase"/>
+    <div class="css-options">
       <player-select v-if="selectingPlayers"
                      v-model="playerSelections"
                      @finish="selectingPlayers=false"/>
       <player-panel v-else
-                    :cards="playerCards[turnPlayer]"/>
+                    :cards="playerCards[turnPlayer]"
+                    :turn-phase="turnPhase"
+                    @die-rolled="rollPhase"/>
     </div>
   </div>
 </template>
@@ -25,17 +28,22 @@ body > div {
 .css-container {
   display: flex;
 }
+
+.css-options {
+  width: 50%;
+}
 </style>
 
 <script>
 // Components
-import Board from '@/components/Board';
-import PlayerSelect from '@/components/PlayerSelect';
-import PlayerPanel from '@/components/PlayerPanel';
+import Board from '@/components/board/Board';
+import PlayerSelect from '@/components/controls/PlayerSelect';
+import PlayerPanel from '@/components/controls/PlayerPanel';
 // Specs
 import playerPositions from '@/specs/startingPositions';
 import grid from '@/specs/boardSpecs';
 import {deck} from '@/specs/cardSpecs';
+import {phases} from '@/specs/turnSpecs';
 // Utils
 import shuffle from '@/utils/shuffle';
 
@@ -78,7 +86,8 @@ export default {
         green: [],
         peacock: [],
         plum: []
-      }
+      },
+      turnPhase: phases.ROLL
     };
   },
   computed: {
@@ -212,7 +221,7 @@ export default {
       return path.some(pathRoom => room === pathRoom);
     },
     isPlayerOnPosition (position) {
-      return Object.values(this.playerCoordinates).some(playerPosition => position.x === playerPosition.x && position.y === playerPosition.y);
+      return Object.values(this.playerCoordinates).some(playerPosition => playerPosition !== null && position.x === playerPosition.x && position.y === playerPosition.y);
     },
     getRemainingDeckAfterPickingEnvelopeCards () {
       let suspectDeck = shuffle(Object.keys(deck.suspects));
@@ -230,15 +239,34 @@ export default {
       deck.forEach((card, index) => {
         this.playerCards[this.turnOrder[index % playerCount]].push(card);
       });
+    },
+    rollPhase (roll) {
+      if (this.turnPhase === phases.ROLL) {
+        this.dieRoll = roll;
+        this.turnPhase = phases.MOVE;
+      }
+    },
+    movePhase (moveTo) {
+      if (this.turnPhase === phases.MOVE) {
+        this.movePlayerTo(this.turnPlayer, moveTo);
+        this.dieRoll = 0;
+        this.currentTurn++;
+      }
+    },
+    movePlayerTo (player, moveTo) {
+      if (this.playerCoordinates.hasOwnProperty(player)) {
+        this.playerCoordinates[player] = moveTo;
+      }
     }
   },
   watch: {
     currentTurn (turn) {
       if (turn > this.turnOrder.length-1) {
-        turn = 0;
+        this.currentTurn = 0;
       } else if (turn < 0) {
-        turn = this.turnOrder.length-1;
+        this.currentTurn = this.turnOrder.length-1;
       }
+      this.turnPhase = phases.ROLL;
     },
     playerSelections: {
       handler (selected) {

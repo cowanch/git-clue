@@ -6,9 +6,11 @@
     <g :transform="`translate(${cellSize}, ${cellSize})`"
        :style="cssVars">
       <spaces v-bind="boardProps"
-              :available-moves="availableMoves"/>
+              :available-moves="availableMoves"
+              @click="emitMove"/>
       <rooms v-bind="boardProps"
-             :available-moves="availableMoves"/>
+             :available-moves="availableMoves"
+             @click="emitMove"/>
       <player-tokens v-bind="boardProps"
                      :coordinates="tokenCoordinates.players"/>
       <weapon-tokens v-bind="boardProps"
@@ -24,6 +26,7 @@ rect, polygon, path {
 
 .highlight {
   fill: #00FFFF;
+  cursor: pointer;
 }
 
 line, path {
@@ -46,10 +49,13 @@ text {
 </style>
 
 <script>
-import Spaces from '@/components/Spaces';
-import Rooms from '@/components/Rooms';
-import PlayerTokens from '@/components/PlayerTokens';
-import WeaponTokens from '@/components/WeaponTokens';
+// Components
+import Spaces from '@/components/board/Spaces';
+import Rooms from '@/components/board/Rooms';
+import PlayerTokens from '@/components/pieces/PlayerTokens';
+import WeaponTokens from '@/components/pieces/WeaponTokens';
+// Mixins
+import moves from '@/mixins/moves.mixin';
 
 const CELL_SIZE = 35;
 const CELL_LINE_WIDTH = 2;
@@ -57,14 +63,12 @@ const BORDER_WIDTH = 4;
 
 export default {
   name: 'Board',
+  mixins: [moves],
   props: {
     tokenCoordinates: {
       type: Object,
       required: true,
       validator: (val) => val.hasOwnProperty('players') && val.hasOwnProperty('weapons')
-    },
-    availableMoves: {
-      type: Object
     }
   },
   computed: {
@@ -83,6 +87,13 @@ export default {
         '--cell-line-width': this.boardProps.cellLineWidth,
         '--border-width': this.boardProps.borderWidth
       };
+    }
+  },
+  methods: {
+    emitMove (moveTo) {
+      if (this.isAvailableMove(moveTo)) {
+        this.$emit('move', moveTo);
+      }
     }
   },
   components: {

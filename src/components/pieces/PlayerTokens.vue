@@ -40,12 +40,12 @@ circle {
 </style>
 
 <script>
-import coordinates from '@/mixins/coordinates.mixin';
+import cellScaling from '@/mixins/cellScaling.mixin';
 import rooms from '@/mixins/rooms.mixin';
 
 export default {
   name: 'PlayerTokens',
-  mixins: [coordinates,rooms],
+  mixins: [cellScaling,rooms],
   props: {
     coordinates: {
       type: Object,
