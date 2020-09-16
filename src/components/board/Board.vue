@@ -7,10 +7,10 @@
        :style="cssVars">
       <spaces v-bind="boardProps"
               :available-moves="availableMoves"
-              @click="movePlayer"/>
+              @click="emitMove"/>
       <rooms v-bind="boardProps"
              :available-moves="availableMoves"
-             @click="movePlayer"/>
+             @click="emitMove"/>
       <player-tokens v-bind="boardProps"
                      :coordinates="tokenCoordinates.players"/>
       <weapon-tokens v-bind="boardProps"
@@ -90,7 +90,7 @@ export default {
     }
   },
   methods: {
-    movePlayer (moveTo) {
+    emitMove (moveTo) {
       if (this.isAvailableMove(moveTo)) {
         this.$emit('move', moveTo);
       }
