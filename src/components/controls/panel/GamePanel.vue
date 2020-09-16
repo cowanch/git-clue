@@ -1,7 +1,8 @@
 <template>
   <div>
     <die :value="dieValue"/>
-    <button @click="rollDie">
+    <button @click="rollDie"
+            :disabled="dieValue>0">
       Roll Die
     </button>
   </div>

@@ -28,8 +28,9 @@
        :key="`cell-row-${cell.coordinates.y}-col-${cell.coordinates.x}`"
        :transform="getCoordinatesTranslation(cell.coordinates)">
       <!-- space square -->
-      <rect :class="{ highlight: isSpaceAvailableToMove(cell.coordinates) }"
-            :width="cellSize" :height="cellSize"/>
+      <rect :class="{ highlight: isAvailableMove(cell.coordinates) }"
+            :width="cellSize" :height="cellSize"
+            @click="$emit('click', cell.coordinates)"/>
     </g>
     <g v-for="(cell) in spaces"
        :key="`border-row-${cell.coordinates.y}-col-${cell.coordinates.x}`"
@@ -51,15 +52,17 @@
 </template>
 
 <script>
-import coordinates from '@/mixins/coordinates.mixin';
+// Mixins
+import cellScaling from '@/mixins/cellScaling.mixin';
+import moves from '@/mixins/moves.mixin';
+// Specs
 import grid from '@/specs/boardSpecs';
 
 export default {
   name: 'Spaces',
-  mixins: [coordinates],
+  mixins: [cellScaling,moves],
   props: {
-    cellLineWidth: Number,
-    availableMoves: Object
+    cellLineWidth: Number
   },
   computed: {
     spaces () {
@@ -93,9 +96,6 @@ export default {
         }
       }
       return coords;
-    },
-    isSpaceAvailableToMove (coordinates) {
-      return this.availableMoves.hasOwnProperty(coordinates.x) && this.availableMoves[coordinates.x].hasOwnProperty(coordinates.y);
     }
   }
 };

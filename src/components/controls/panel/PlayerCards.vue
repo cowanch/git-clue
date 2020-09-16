@@ -12,7 +12,7 @@
 .css-panel {
   background: lightgray;
   display: grid;
-  grid-template-columns: auto auto auto auto auto;
+  grid-template-columns: auto auto auto auto auto auto;
 }
 .css-card {
   margin: 10px 10px;
