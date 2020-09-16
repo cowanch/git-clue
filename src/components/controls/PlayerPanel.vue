@@ -49,9 +49,9 @@
 </style>
 
 <script>
-import PlayerCards from '@/components/PlayerCards';
-import Notepad from '@/components/Notepad';
-import GamePanel from '@/components/GamePanel';
+import PlayerCards from '@/components/controls/panel/PlayerCards';
+import Notepad from '@/components/controls/panel/Notepad';
+import GamePanel from '@/components/controls/panel/GamePanel';
 
 export default {
   name: 'PlayerPanel',

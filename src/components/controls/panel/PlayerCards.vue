@@ -20,7 +20,7 @@
 </style>
 
 <script>
-import Card from '@/components/Card';
+import Card from '@/components/pieces/Card';
 
 export default {
   name: 'PlayerCards',

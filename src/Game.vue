@@ -34,9 +34,9 @@ body > div {
 
 <script>
 // Components
-import Board from '@/components/Board';
-import PlayerSelect from '@/components/PlayerSelect';
-import PlayerPanel from '@/components/PlayerPanel';
+import Board from '@/components/board/Board';
+import PlayerSelect from '@/components/controls/PlayerSelect';
+import PlayerPanel from '@/components/controls/PlayerPanel';
 // Specs
 import playerPositions from '@/specs/startingPositions';
 import grid from '@/specs/boardSpecs';

@@ -46,10 +46,10 @@ text {
 </style>
 
 <script>
-import Spaces from '@/components/Spaces';
-import Rooms from '@/components/Rooms';
-import PlayerTokens from '@/components/PlayerTokens';
-import WeaponTokens from '@/components/WeaponTokens';
+import Spaces from '@/components/board/Spaces';
+import Rooms from '@/components/board/Rooms';
+import PlayerTokens from '@/components/pieces/PlayerTokens';
+import WeaponTokens from '@/components/pieces/WeaponTokens';
 
 const CELL_SIZE = 35;
 const CELL_LINE_WIDTH = 2;

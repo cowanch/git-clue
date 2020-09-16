@@ -8,7 +8,7 @@
 </template>
 
 <script>
-import Die from '@/components/Die';
+import Die from '@/components/pieces/Die';
 
 const ROLLS = 5;
 
