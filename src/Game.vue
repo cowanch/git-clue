@@ -14,7 +14,8 @@
       <player-panel v-else
                     :cards="playerCards[turnPlayer]"
                     :turn-phase="turnPhase"
-                    @die-rolled="rollPhase"/>
+                    @die-rolled="rollPhase"
+                    @end-turn="endTurn"/>
     </div>
   </div>
 </template>
@@ -72,16 +73,20 @@ export default {
         wrench: 'study'
       },
       playerSelections: {
-        scarlet: 'disabled',
-        mustard: 'disabled',
-        white: 'disabled',
+        // scarlet: 'disabled',
+        // mustard: 'disabled',
+        // white: 'disabled',
+        scarlet: 'human',
+        mustard: 'cpu_easy',
+        white: 'cpu_easy',
         green: 'disabled',
         peacock: 'disabled',
         plum: 'disabled'
       },
       currentTurn: -1,
       dieRoll: 0,
-      selectingPlayers: true,
+      // selectingPlayers: true,
+      selectingPlayers: false,
       envelope: {},
       playerCards: {
         scarlet: [],
@@ -91,7 +96,8 @@ export default {
         peacock: [],
         plum: []
       },
-      turnPhase: phases.ROLL
+      // turnPhase: phases.ROLL
+      turnPhase: phases.SUGGEST
     };
   },
   computed: {
@@ -259,7 +265,7 @@ export default {
         if (this.isValidRoom(this.playerCoordinates[this.turnPlayer])) {
           this.turnPhase = phases.SUGGEST;
         } else {
-          this.currentTurn++;
+          this.endTurn();
         }
       }
     },
@@ -267,6 +273,9 @@ export default {
       if (this.playerCoordinates.hasOwnProperty(player)) {
         this.playerCoordinates[player] = moveTo;
       }
+    },
+    endTurn () {
+      this.currentTurn++;
     }
   },
   watch: {
@@ -276,7 +285,8 @@ export default {
       } else if (turn < 0) {
         this.currentTurn = this.turnOrder.length-1;
       }
-      this.turnPhase = phases.ROLL;
+      // this.turnPhase = phases.ROLL;
+      this.turnPhase = phases.SUGGEST;
     },
     playerSelections: {
       handler (selected) {

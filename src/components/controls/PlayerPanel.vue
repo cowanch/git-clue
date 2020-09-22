@@ -15,10 +15,14 @@
       </button>
     </div>
     <game-panel v-show="isTabOpen('game')"
+                class="css-panel"
                 :turn-phase="turnPhase"
-                @die-rolled="roll => $emit('die-rolled', roll)"/>
-    <notepad v-show="isTabOpen('notepad')"/>
+                @die-rolled="roll => $emit('die-rolled', roll)"
+                @end-turn="() => $emit('end-turn')"/>
+    <notepad v-show="isTabOpen('notepad')"
+             class="css-panel"/>
     <player-cards v-show="isTabOpen('cards')"
+                  class="css-panel"
                   :cards="cards"/>
   </div>
 </template>
@@ -46,6 +50,10 @@
 /* Create an active/current tablink class */
 .css-tab button.active {
   background-color: #ccc;
+}
+.css-panel {
+  margin-top: 20px;
+  margin-left: 20px;
 }
 </style>
 
