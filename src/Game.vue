@@ -7,6 +7,7 @@
            :available-moves="availableMoves"
            @move="movePhase"/>
     <div class="css-options">
+      <p>TURN PHASE: {{turnPhase}}</p>
       <player-select v-if="selectingPlayers"
                      v-model="playerSelections"
                      @finish="selectingPlayers=false"/>
@@ -46,9 +47,12 @@ import {deck} from '@/specs/cardSpecs';
 import {phases} from '@/specs/turnSpecs';
 // Utils
 import shuffle from '@/utils/shuffle';
+// Mixins
+import rooms from '@/mixins/rooms.mixin';
 
 export default {
   name: 'Game',
+  mixins: [rooms],
   data () {
     return {
       playerCoordinates: {
@@ -248,9 +252,15 @@ export default {
     },
     movePhase (moveTo) {
       if (this.turnPhase === phases.MOVE) {
+        // Move the player and reset the die
         this.movePlayerTo(this.turnPlayer, moveTo);
         this.dieRoll = 0;
-        this.currentTurn++;
+        // Check to see if the player is in a room
+        if (this.isValidRoom(this.playerCoordinates[this.turnPlayer])) {
+          this.turnPhase = phases.SUGGEST;
+        } else {
+          this.currentTurn++;
+        }
       }
     },
     movePlayerTo (player, moveTo) {
