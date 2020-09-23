@@ -14,7 +14,9 @@
       <player-panel v-else
                     :cards="playerCards[turnPlayer]"
                     :turn-phase="turnPhase"
+                    :player-position="this.turnPlayerPosition"
                     @die-rolled="rollPhase"
+                    @suggest="suggestPhase"
                     @end-turn="endTurn"/>
     </div>
   </div>
@@ -73,20 +75,16 @@ export default {
         wrench: 'study'
       },
       playerSelections: {
-        // scarlet: 'disabled',
-        // mustard: 'disabled',
-        // white: 'disabled',
-        scarlet: 'human',
-        mustard: 'cpu_easy',
-        white: 'cpu_easy',
+        scarlet: 'disabled',
+        mustard: 'disabled',
+        white: 'disabled',
         green: 'disabled',
         peacock: 'disabled',
         plum: 'disabled'
       },
       currentTurn: -1,
       dieRoll: 0,
-      // selectingPlayers: true,
-      selectingPlayers: false,
+      selectingPlayers: true,
       envelope: {},
       playerCards: {
         scarlet: [],
@@ -96,8 +94,7 @@ export default {
         peacock: [],
         plum: []
       },
-      // turnPhase: phases.ROLL
-      turnPhase: phases.SUGGEST
+      turnPhase: phases.ROLL
     };
   },
   computed: {
@@ -112,6 +109,9 @@ export default {
     },
     turnPlayer () {
       return this.turnOrder[this.currentTurn];
+    },
+    turnPlayerPosition () {
+      return this.playerCoordinates[this.turnPlayer];
     },
     availableMoves () {
       let availableMoves = {};
@@ -153,6 +153,11 @@ export default {
   },
   created () {
     this.currentTurn = 0;
+  },
+  mounted () {
+    this.playerSelections.scarlet = 'human';
+    this.playerSelections.mustard = 'cpu_easy';
+    this.playerSelections.white = 'cpu_easy';
   },
   methods: {
     findAvailableMoves (start, moves) {
@@ -262,12 +267,43 @@ export default {
         this.movePlayerTo(this.turnPlayer, moveTo);
         this.dieRoll = 0;
         // Check to see if the player is in a room
-        if (this.isValidRoom(this.playerCoordinates[this.turnPlayer])) {
+        if (this.isValidRoom(this.turnPlayerPosition)) {
           this.turnPhase = phases.SUGGEST;
         } else {
           this.endTurn();
         }
       }
+    },
+    suggestPhase (suggestion) {
+      // Suggestion made, find a player that can disprove it
+      let turnIter = (this.currentTurn + 1) % this.turnOrder.length;
+      while (turnIter !== this.currentTurn) {
+        let currentPlayer = this.turnOrder[turnIter];
+        let cards = this.playerCards[currentPlayer];
+        let disprovingCards = this.getDisprovingCards(cards, suggestion);
+        if (disprovingCards.length > 0) {
+          console.log(`${deck.suspects[currentPlayer]} can disprove the suggestion`);
+          console.log(disprovingCards);
+          break;
+        } else {
+          console.log(`${deck.suspects[currentPlayer]} cannot disprove the suggestion`);
+        }
+        turnIter = (turnIter + 1) % this.turnOrder.length;
+      }
+    },
+    getDisprovingCards (cards, suggestion) {
+      let disprovingCards = [];
+      let { suspect, weapon, room } = suggestion;
+      if (cards.includes(suspect)) {
+        disprovingCards.push(suspect);
+      }
+      if (cards.includes(weapon)) {
+        disprovingCards.push(weapon);
+      }
+      if (cards.includes(room)) {
+        disprovingCards.push(room);
+      }
+      return disprovingCards;
     },
     movePlayerTo (player, moveTo) {
       if (this.playerCoordinates.hasOwnProperty(player)) {
@@ -285,13 +321,14 @@ export default {
       } else if (turn < 0) {
         this.currentTurn = this.turnOrder.length-1;
       }
-      // this.turnPhase = phases.ROLL;
-      this.turnPhase = phases.SUGGEST;
+      this.turnPhase = phases.ROLL;
+      // this.turnPhase = phases.SUGGEST;
     },
     playerSelections: {
       handler (selected) {
         if (this.selectingPlayers) {
           Object.keys(this.playerCoordinates).forEach(player => this.playerCoordinates[player] = selected[player] !== 'disabled' ? playerPositions[player] : null);
+          this.selectingPlayers = false;
         }
       },
       deep: true

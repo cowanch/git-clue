@@ -5,7 +5,7 @@
 <template>
   <div class="css-suggestion-options">
     <!-- Suspect Suggestions -->
-    <label for="suspectSuggestions">Suggest a suspect:</label>
+    <label for="suspectSuggestions">Suspect:</label>
     <select id="suspectSuggestions"
             v-model="selected.suspect">
       <option value="">--Select a Suspect--</option>
@@ -16,7 +16,7 @@
       </option>
     </select>
     <!-- Weapon Suggestions -->
-    <label for="weaponSuggestions">Suggest a weapon:</label>
+    <label for="weaponSuggestions">Weapon:</label>
     <select id="weaponSuggestions"
             v-model="selected.weapon">
       <option value="">--Select a Weapon--</option>
@@ -26,6 +26,19 @@
         {{name}}
       </option>
     </select>
+    <!-- Room Suggestions -->
+    <label for="weaponSuggestions">Room:</label>
+    <select id="weaponSuggestions"
+            v-model="selected.room"
+            v-if="!room">
+      <option value="">--Select a Room--</option>
+      <option v-for="(name, key) in rooms"
+              :key="key"
+              :value="key">
+        {{name}}
+      </option>
+    </select>
+    <p v-else>{{rooms[room]}}</p>
   </div>
 </template>
 
@@ -35,7 +48,7 @@
   grid-template-columns: auto auto;
   width: 30%;
 }
-select,label {
+select,label,p {
   margin-top: 10px;
 }
 </style>
@@ -44,26 +57,36 @@ select,label {
 import deck from '@/mixins/deck.mixin';
 
 export default {
-  name: 'Suggestions',
+  name: 'ClueOptions',
   mixins: [deck],
   props: {
     value: {
       type: Object,
       validator: (val) => val.hasOwnProperty('suspect') && val.hasOwnProperty('weapon')
-    }
+    },
+    room: String
   },
   data () {
     return {
       selected: {
         suspect: '',
-        weapon: ''
+        weapon: '',
+        room: ''
       }
     };
   },
   watch: {
     selected: {
       handler (val) {
-        this.$emit('input', val);
+        if (!this.room) {
+          this.$emit('input', val);
+        } else {
+          this.$emit('input', {
+            suspect: val.suspect,
+            weapon: val.weapon,
+            room: this.room
+          });
+        }
       },
       deep: true
     },
@@ -73,6 +96,9 @@ export default {
       }
       if (val.weapon !== this.selected.weapon) {
         this.selected.weapon = val.weapon;
+      }
+      if (val.room !== this.selected.room && !this.room) {
+        this.selected.room = val.room;
       }
     }
   }

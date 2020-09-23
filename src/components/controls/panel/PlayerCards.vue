@@ -1,5 +1,5 @@
 <template>
-  <div class="css-panel">
+  <div class="css-player-cards">
     <card v-for="(card) in cards"
           :key="card"
           class="css-card"
@@ -9,7 +9,7 @@
 </template>
 
 <style scoped>
-.css-panel {
+.css-player-cards {
   background: lightgray;
   display: grid;
   grid-template-columns: auto auto auto auto auto auto;

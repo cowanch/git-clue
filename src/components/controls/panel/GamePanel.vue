@@ -1,7 +1,7 @@
 <template>
-  <div>
-    <!-- <template v-if="showDie"> -->
-    <template>
+  <div class="css-game-panel">
+    <template v-if="showDie">
+    <!-- <template> -->
       <die :value="dieValue"/>
       <div>
         <button @click="rollDie"
@@ -10,8 +10,8 @@
         </button>
       </div>
     </template>
-    <!-- <template v-else-if="showSuggestionSection"> -->
-    <template>
+    <template v-else-if="showSuggestionSection">
+    <!-- <template> -->
       <div v-if="!showSuggestionOptions">
         <button @click="showSuggestionOptions=true">
           Make Suggestion
@@ -20,32 +20,39 @@
           End Turn
         </button>
       </div>
-      <suggestions v-model="suggestion"/>
-      <button @click="makeSuggestion"
-              :disabled="!suggestionReady">
-        Suggest
-      </button>
+      <div v-else>
+        <clue-options v-model="suggestion"
+                      :room="playerRoom"/>
+        <button @click="makeSuggestion"
+                :disabled="!suggestionReady">
+          Suggest
+        </button>
+      </div>
     </template>
   </div>
 </template>
 
 <style>
-button {
+.css-game-panel button {
   margin-right: 20px;
+  margin-top: 20px;
 }
 </style>
 
 <script>
 import Die from '@/components/pieces/Die';
-import Suggestions from '@/components/controls/panel/Suggestions';
+import ClueOptions from '@/components/controls/panel/ClueOptions';
 import {phases} from '@/specs/turnSpecs';
+import rooms from '@/mixins/rooms.mixin';
 
 const ROLLS = 5;
 
 export default {
   name: 'GamePanel',
+  mixins: [rooms],
   props: {
-    turnPhase: String
+    turnPhase: String,
+    playerPosition: [String, Object]
   },
   data () {
     return {
@@ -54,8 +61,7 @@ export default {
       showSuggestionOptions: false,
       suggestion: {
         suspect: '',
-        weapon: '',
-        room: ''
+        weapon: ''
       }
     };
   },
@@ -70,7 +76,10 @@ export default {
       return this.turnPhase === phases.SUGGEST;
     },
     suggestionReady () {
-      return this.suggestion.suspect && this.suggestion.weapon && this.suggestion.room;
+      return this.suggestion.suspect && this.suggestion.weapon && this.playerRoom;
+    },
+    playerRoom () {
+      return this.isValidRoom(this.playerPosition) ? this.playerPosition : '';
     }
   },
   methods: {
@@ -92,7 +101,11 @@ export default {
     },
     makeSuggestion () {
       if (this.suggestionReady) {
-        this.$emit('suggest', this.suggestion);
+        this.$emit('suggest', {
+          suspect: this.suggestion.suspect,
+          weapon: this.suggestion.weapon,
+          room: this.playerRoom
+        });
       }
     }
   },
@@ -105,7 +118,7 @@ export default {
   },
   components: {
     Die,
-    Suggestions
+    ClueOptions
   }
 };
 </script>

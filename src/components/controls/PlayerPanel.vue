@@ -17,12 +17,13 @@
     <game-panel v-show="isTabOpen('game')"
                 class="css-panel"
                 :turn-phase="turnPhase"
+                :player-position="playerPosition"
                 @die-rolled="roll => $emit('die-rolled', roll)"
-                @end-turn="() => $emit('end-turn')"/>
+                @end-turn="() => $emit('end-turn')"
+                @suggest="suggestion => $emit('suggest', suggestion)"/>
     <notepad v-show="isTabOpen('notepad')"
              class="css-panel"/>
     <player-cards v-show="isTabOpen('cards')"
-                  class="css-panel"
                   :cards="cards"/>
   </div>
 </template>
@@ -53,7 +54,6 @@
 }
 .css-panel {
   margin-top: 20px;
-  margin-left: 20px;
 }
 </style>
 
@@ -66,7 +66,8 @@ export default {
   name: 'PlayerPanel',
   props: {
     cards: Array,
-    turnPhase: String
+    turnPhase: String,
+    playerPosition: [String, Object]
   },
   data () {
     return {
