@@ -15,9 +15,11 @@
                     :cards="playerCards[turnPlayer]"
                     :turn-phase="turnPhase"
                     :player-position="this.turnPlayerPosition"
+                    :messages="messages"
                     @die-rolled="rollPhase"
                     @suggest="suggestPhase"
-                    @end-turn="endTurn"/>
+                    @end-turn="endTurn"
+                    @show-suggest-options="suggestOptionsShown"/>
     </div>
   </div>
 </template>
@@ -94,7 +96,8 @@ export default {
         peacock: [],
         plum: []
       },
-      turnPhase: phases.ROLL
+      turnPhase: phases.ROLL,
+      messages: []
     };
   },
   computed: {
@@ -152,6 +155,7 @@ export default {
     }
   },
   created () {
+    this.addMessage('Welcome to Clue!');
     this.currentTurn = 0;
   },
   mounted () {
@@ -276,17 +280,18 @@ export default {
     },
     suggestPhase (suggestion) {
       // Suggestion made, find a player that can disprove it
+      this.addSuggestionMessage(suggestion);
       let turnIter = (this.currentTurn + 1) % this.turnOrder.length;
       while (turnIter !== this.currentTurn) {
         let currentPlayer = this.turnOrder[turnIter];
         let cards = this.playerCards[currentPlayer];
         let disprovingCards = this.getDisprovingCards(cards, suggestion);
         if (disprovingCards.length > 0) {
-          console.log(`${deck.suspects[currentPlayer]} can disprove the suggestion`);
-          console.log(disprovingCards);
+          this.addMessage(`${deck.suspects[currentPlayer]} can disprove the suggestion`);
+          this.addMessage(disprovingCards);
           break;
         } else {
-          console.log(`${deck.suspects[currentPlayer]} cannot disprove the suggestion`);
+          this.addMessage(`${deck.suspects[currentPlayer]} cannot disprove the suggestion`);
         }
         turnIter = (turnIter + 1) % this.turnOrder.length;
       }
@@ -312,6 +317,21 @@ export default {
     },
     endTurn () {
       this.currentTurn++;
+    },
+    suggestOptionsShown (shown) {
+      if (shown && this.turnPhase === phases.ROLL_OR_SUGGEST) {
+        this.turnPhase = phases.SUGGEST;
+      }
+    },
+    addSuggestionMessage (suggestion) {
+      let {suspect, weapon, room} = suggestion;
+      let suspectText = deck.suspects[suspect];
+      let weaponText = deck.weapons[weapon];
+      let roomText = deck.rooms[room];
+      this.addMessage(`${deck.suspects[this.turnPlayer]} suggests ${suspectText} with the ${weaponText} in the ${roomText}`);
+    },
+    addMessage (message) {
+      this.messages.push(message);
     }
   },
   watch: {
@@ -321,13 +341,19 @@ export default {
       } else if (turn < 0) {
         this.currentTurn = this.turnOrder.length-1;
       }
-      this.turnPhase = phases.ROLL;
-      // this.turnPhase = phases.SUGGEST;
+    },
+    turnPlayer () {
+      if (this.isValidRoom(this.turnPlayerPosition)) {
+        this.turnPhase = phases.ROLL_OR_SUGGEST;
+      } else {
+        this.turnPhase = phases.ROLL;
+      }
     },
     playerSelections: {
       handler (selected) {
         if (this.selectingPlayers) {
           Object.keys(this.playerCoordinates).forEach(player => this.playerCoordinates[player] = selected[player] !== 'disabled' ? playerPositions[player] : null);
+          this.playerCoordinates.scarlet = 'ballroom';
           this.selectingPlayers = false;
         }
       },

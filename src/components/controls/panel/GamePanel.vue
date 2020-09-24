@@ -1,26 +1,20 @@
 <template>
-  <div class="css-game-panel">
-    <template v-if="showDie">
-    <!-- <template> -->
-      <die :value="dieValue"/>
+  <div>
+    <div class="css-game-panel">
+      <die v-if="showDie"
+           :value="dieValue"/>
       <div>
-        <button @click="rollDie"
+        <button v-if="showDie"
+                @click="rollDie"
                 :disabled="rollDisabled">
           Roll Die
         </button>
-      </div>
-    </template>
-    <template v-else-if="showSuggestionSection">
-    <!-- <template> -->
-      <div v-if="!showSuggestionOptions">
-        <button @click="showSuggestionOptions=true">
+        <button v-if="showSuggestionPrompt"
+                @click="showSuggestionOptions=true">
           Make Suggestion
         </button>
-        <button @click="endTurn">
-          End Turn
-        </button>
       </div>
-      <div v-else>
+      <div v-if="showSuggestionOptions">
         <clue-options v-model="suggestion"
                       :room="playerRoom"/>
         <button @click="makeSuggestion"
@@ -28,7 +22,9 @@
           Suggest
         </button>
       </div>
-    </template>
+    </div>
+    <textarea readonly
+              :value="messagesString"/>
   </div>
 </template>
 
@@ -36,6 +32,12 @@
 .css-game-panel button {
   margin-right: 20px;
   margin-top: 20px;
+}
+textarea {
+  margin-top: 20px;
+  width: 100%;
+  height: 200px;
+  resize: none;
 }
 </style>
 
@@ -52,7 +54,8 @@ export default {
   mixins: [rooms],
   props: {
     turnPhase: String,
-    playerPosition: [String, Object]
+    playerPosition: [String, Object],
+    messages: Array
   },
   data () {
     return {
@@ -66,14 +69,24 @@ export default {
     };
   },
   computed: {
+    messagesString () {
+      let text = '';
+      if (this.messages) {
+        this.messages.forEach(str => text+=`${str}\n`);
+      }
+      return text;
+    },
     rollDisabled () {
-      return this.turnPhase !== phases.ROLL;
+      return ![phases.ROLL, phases.ROLL_OR_SUGGEST].includes(this.turnPhase);
     },
     showDie () {
-      return this.turnPhase === phases.ROLL || this.turnPhase === phases.MOVE;
+      return [phases.ROLL, phases.MOVE, phases.ROLL_OR_SUGGEST].includes(this.turnPhase);
     },
-    showSuggestionSection () {
-      return this.turnPhase === phases.SUGGEST;
+    showSuggestions () {
+      return [phases.SUGGEST, phases.ROLL_OR_SUGGEST].includes(this.turnPhase);
+    },
+    showSuggestionPrompt () {
+      return this.showSuggestions && !this.showSuggestionOptions;
     },
     suggestionReady () {
       return this.suggestion.suspect && this.suggestion.weapon && this.playerRoom;
@@ -114,6 +127,9 @@ export default {
       if (phase === phases.ROLL) {
         this.dieValue = 0;
       }
+    },
+    showSuggestionOptions (show) {
+      this.$emit('show-suggest-options', show);
     }
   },
   components: {

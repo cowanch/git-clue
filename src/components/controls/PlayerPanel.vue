@@ -18,8 +18,10 @@
                 class="css-panel"
                 :turn-phase="turnPhase"
                 :player-position="playerPosition"
+                :messages="messages"
                 @die-rolled="roll => $emit('die-rolled', roll)"
                 @end-turn="() => $emit('end-turn')"
+                @show-suggest-options="show => $emit('show-suggest-options', show)"
                 @suggest="suggestion => $emit('suggest', suggestion)"/>
     <notepad v-show="isTabOpen('notepad')"
              class="css-panel"/>
@@ -67,7 +69,8 @@ export default {
   props: {
     cards: Array,
     turnPhase: String,
-    playerPosition: [String, Object]
+    playerPosition: [String, Object],
+    messages: Array
   },
   data () {
     return {
