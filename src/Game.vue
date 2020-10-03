@@ -7,7 +7,6 @@
            :available-moves="availableMoves"
            @move="movePhase"/>
     <div class="css-options">
-      <p>TURN PHASE: {{turnPhase}}</p>
       <player-select v-if="selectingPlayers"
                      v-model="playerSelections"
                      @finish="selectingPlayers=false"/>
@@ -48,7 +47,7 @@ import Board from '@/components/board/Board';
 import PlayerSelect from '@/components/controls/PlayerSelect';
 import PlayerPanel from '@/components/controls/PlayerPanel';
 // Specs
-import playerPositions from '@/specs/startingPositions';
+import startingPositions from '@/specs/startingPositions';
 import grid from '@/specs/boardSpecs';
 import {playerTypes} from '@/specs/playerTypeSpecs';
 // Utils
@@ -63,46 +62,11 @@ export default {
   mixins: [rooms,deckUtil,turnPhases],
   data () {
     return {
-      playerCoordinates: {
-        scarlet: null,
-        mustard: null,
-        white: null,
-        green: null,
-        peacock: null,
-        plum: null
-      },
-      lastTurnCoordinates: {
-        scarlet: null,
-        mustard: null,
-        white: null,
-        green: null,
-        peacock: null,
-        plum: null
-      },
-      playerSelections: {
-        scarlet: 'disabled',
-        mustard: 'disabled',
-        white: 'disabled',
-        green: 'disabled',
-        peacock: 'disabled',
-        plum: 'disabled'
-      },
-      playerCards: {
-        scarlet: [],
-        mustard: [],
-        white: [],
-        green: [],
-        peacock: [],
-        plum: []
-      },
-      weaponCoordinates: {
-        candlestick: 'conservatory',
-        knife: 'lounge',
-        pipe: 'kitchen',
-        revolver: 'dining',
-        rope: 'hall',
-        wrench: 'study'
-      },
+      playerCoordinates: {},
+      lastTurnCoordinates: {},
+      playerSelections: {},
+      playerCards: {},
+      weaponCoordinates: {},
       currentTurn: -1,
       dieRoll: 0,
       selectingPlayers: true,
@@ -173,6 +137,19 @@ export default {
     }
   },
   created () {
+    // Set up the different player settings
+    Object.keys(this.suspects).forEach(player => {
+      this.$set(this.playerCoordinates, player, null);
+      this.$set(this.lastTurnCoordinates, player, null);
+      this.$set(this.playerSelections, player, 'disabled');
+      this.$set(this.playerCards, player, []);
+    });
+    let roomKeys = Object.keys(this.rooms);
+    Object.keys(this.weapons).forEach(weapon => {
+      let rand = Math.floor(Math.random() * roomKeys.length);
+      this.$set(this.weaponCoordinates, weapon, roomKeys[rand]);
+      roomKeys.splice(rand, 1);
+    });
     this.addMessage('Welcome to Clue!');
     this.currentTurn = 0;
   },
@@ -416,7 +393,7 @@ export default {
     playerSelections: {
       handler (selected) {
         if (this.selectingPlayers) {
-          Object.keys(this.playerCoordinates).forEach(player => this.playerCoordinates[player] = selected[player] !== 'disabled' ? playerPositions[player] : null);
+          Object.keys(this.playerCoordinates).forEach(player => this.playerCoordinates[player] = selected[player] !== 'disabled' ? startingPositions[player] : null);
           this.playerCoordinates.scarlet = 'ballroom';
           this.selectingPlayers = false;
         }
