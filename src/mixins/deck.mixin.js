@@ -14,5 +14,16 @@ export default {
     rooms () {
       return deck.rooms;
     }
+  },
+  methods: {
+    getCardText (card) {
+      if (this.suspects.hasOwnProperty(card)) {
+        return this.suspects[card];
+      } else if (this.weapons.hasOwnProperty(card)) {
+        return this.weapons[card];
+      } else if (this.rooms.hasOwnProperty(card)) {
+        return this.rooms[card];
+      }
+    }
   }
 };

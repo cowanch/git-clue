@@ -44,14 +44,14 @@ textarea {
 <script>
 import Die from '@/components/pieces/Die';
 import ClueOptions from '@/components/controls/panel/ClueOptions';
-import {phases} from '@/specs/turnSpecs';
 import rooms from '@/mixins/rooms.mixin';
+import turnPhases from '@/mixins/turnPhases.mixin';
 
 const ROLLS = 5;
 
 export default {
   name: 'GamePanel',
-  mixins: [rooms],
+  mixins: [rooms,turnPhases],
   props: {
     turnPhase: String,
     playerPosition: [String, Object],
@@ -65,7 +65,8 @@ export default {
       suggestion: {
         suspect: '',
         weapon: ''
-      }
+      },
+      isDieRolling: false
     };
   },
   computed: {
@@ -77,13 +78,13 @@ export default {
       return text;
     },
     rollDisabled () {
-      return ![phases.ROLL, phases.ROLL_OR_SUGGEST].includes(this.turnPhase);
+      return !this.isRollPhase(this.turnPhase) || this.isDieRolling;
     },
     showDie () {
-      return [phases.ROLL, phases.MOVE, phases.ROLL_OR_SUGGEST].includes(this.turnPhase);
+      return this.isRollPhase(this.turnPhase) || this.turnPhase === this.phases.MOVE;
     },
     showSuggestions () {
-      return [phases.SUGGEST, phases.ROLL_OR_SUGGEST].includes(this.turnPhase);
+      return this.isSuggestionPhase(this.turnPhase);
     },
     showSuggestionPrompt () {
       return this.showSuggestions && !this.showSuggestionOptions;
@@ -97,6 +98,7 @@ export default {
   },
   methods: {
     rollDie () {
+      this.isDieRolling = true;
       this.generateRoll();
     },
     generateRoll (rollNumber = 0) {
@@ -107,6 +109,7 @@ export default {
         }, 100);
       } else {
         this.$emit('die-rolled', this.dieValue);
+        this.isDieRolling = false;
       }
     },
     endTurn () {
@@ -124,8 +127,9 @@ export default {
   },
   watch: {
     turnPhase (phase) {
-      if (phase === phases.ROLL) {
+      if (phase === this.phases.ROLL) {
         this.dieValue = 0;
+        this.showSuggestionOptions = false;
       }
     },
     showSuggestionOptions (show) {

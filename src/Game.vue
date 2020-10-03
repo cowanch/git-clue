@@ -48,16 +48,16 @@ import PlayerPanel from '@/components/controls/PlayerPanel';
 // Specs
 import playerPositions from '@/specs/startingPositions';
 import grid from '@/specs/boardSpecs';
-import {deck} from '@/specs/cardSpecs';
-import {phases} from '@/specs/turnSpecs';
 // Utils
 import shuffle from '@/utils/shuffle';
 // Mixins
 import rooms from '@/mixins/rooms.mixin';
+import deckUtil from '@/mixins/deck.mixin';
+import turnPhases from '@/mixins/turnPhases.mixin';
 
 export default {
   name: 'Game',
-  mixins: [rooms],
+  mixins: [rooms,deckUtil,turnPhases],
   data () {
     return {
       playerCoordinates: {
@@ -96,7 +96,7 @@ export default {
         peacock: [],
         plum: []
       },
-      turnPhase: phases.ROLL,
+      turnPhase: null,
       messages: []
     };
   },
@@ -243,9 +243,9 @@ export default {
       return Object.values(this.playerCoordinates).some(playerPosition => playerPosition !== null && position.x === playerPosition.x && position.y === playerPosition.y);
     },
     getRemainingDeckAfterPickingEnvelopeCards () {
-      let suspectDeck = shuffle(Object.keys(deck.suspects));
-      let weaponDeck = shuffle(Object.keys(deck.weapons));
-      let roomDeck = shuffle(Object.keys(deck.rooms));
+      let suspectDeck = shuffle(Object.keys(this.suspects));
+      let weaponDeck = shuffle(Object.keys(this.weapons));
+      let roomDeck = shuffle(Object.keys(this.rooms));
       this.envelope.suspect = suspectDeck.shift();
       this.envelope.weapon = weaponDeck.shift();
       this.envelope.room = roomDeck.shift();
@@ -260,19 +260,19 @@ export default {
       });
     },
     rollPhase (roll) {
-      if (this.turnPhase === phases.ROLL) {
+      if (this.isRollPhase(this.turnPhase)) {
         this.dieRoll = roll;
-        this.turnPhase = phases.MOVE;
+        this.turnPhase = this.phases.MOVE;
       }
     },
     movePhase (moveTo) {
-      if (this.turnPhase === phases.MOVE) {
+      if (this.turnPhase === this.phases.MOVE) {
         // Move the player and reset the die
         this.movePlayerTo(this.turnPlayer, moveTo);
         this.dieRoll = 0;
         // Check to see if the player is in a room
         if (this.isValidRoom(this.turnPlayerPosition)) {
-          this.turnPhase = phases.SUGGEST;
+          this.turnPhase = this.phases.SUGGEST;
         } else {
           this.endTurn();
         }
@@ -287,13 +287,25 @@ export default {
         let cards = this.playerCards[currentPlayer];
         let disprovingCards = this.getDisprovingCards(cards, suggestion);
         if (disprovingCards.length > 0) {
-          this.addMessage(`${deck.suspects[currentPlayer]} can disprove the suggestion`);
-          this.addMessage(disprovingCards);
+          this.addMessage(`${this.suspects[currentPlayer]} can disprove the suggestion`);
+          this.handleDisprovingCards(currentPlayer, disprovingCards);
           break;
         } else {
-          this.addMessage(`${deck.suspects[currentPlayer]} cannot disprove the suggestion`);
+          this.addMessage(`${this.suspects[currentPlayer]} cannot disprove the suggestion`);
         }
         turnIter = (turnIter + 1) % this.turnOrder.length;
+      }
+    },
+    handleDisprovingCards (player, cards) {
+      if (this.playerSelections[player] === 'human') {
+        this.turnPhase = 'disprove_suggestion';
+      } else if (this.playerSelections[player] === 'cpu_easy' || this.playerSelections[player] === 'cpu_medium' || this.playerSelections[player] === 'cpu_hard') {
+        let rand = Math.floor(Math.random() * cards.length);
+        let card = cards[rand];
+        if (this.playerSelections[this.turnPlayer] === 'human') {
+          this.addMessage(`${this.suspects[player]} reveals ${this.getCardText(card)}`);
+        }
+        this.endTurn();
       }
     },
     getDisprovingCards (cards, suggestion) {
@@ -319,16 +331,16 @@ export default {
       this.currentTurn++;
     },
     suggestOptionsShown (shown) {
-      if (shown && this.turnPhase === phases.ROLL_OR_SUGGEST) {
-        this.turnPhase = phases.SUGGEST;
+      if (shown && this.turnPhase === this.phases.ROLL_OR_SUGGEST) {
+        this.turnPhase = this.phases.SUGGEST;
       }
     },
     addSuggestionMessage (suggestion) {
       let {suspect, weapon, room} = suggestion;
-      let suspectText = deck.suspects[suspect];
-      let weaponText = deck.weapons[weapon];
-      let roomText = deck.rooms[room];
-      this.addMessage(`${deck.suspects[this.turnPlayer]} suggests ${suspectText} with the ${weaponText} in the ${roomText}`);
+      let suspectText = this.suspects[suspect];
+      let weaponText = this.weapons[weapon];
+      let roomText = this.rooms[room];
+      this.addMessage(`${this.suspects[this.turnPlayer]} suggests ${suspectText} with the ${weaponText} in the ${roomText}`);
     },
     addMessage (message) {
       this.messages.push(message);
@@ -344,9 +356,9 @@ export default {
     },
     turnPlayer () {
       if (this.isValidRoom(this.turnPlayerPosition)) {
-        this.turnPhase = phases.ROLL_OR_SUGGEST;
+        this.turnPhase = this.phases.ROLL_OR_SUGGEST;
       } else {
-        this.turnPhase = phases.ROLL;
+        this.turnPhase = this.phases.ROLL;
       }
     },
     playerSelections: {
