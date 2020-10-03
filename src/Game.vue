@@ -79,14 +79,6 @@ export default {
         peacock: null,
         plum: null
       },
-      weaponCoordinates: {
-        candlestick: 'conservatory',
-        knife: 'lounge',
-        pipe: 'kitchen',
-        revolver: 'dining',
-        rope: 'hall',
-        wrench: 'study'
-      },
       playerSelections: {
         scarlet: 'disabled',
         mustard: 'disabled',
@@ -95,10 +87,6 @@ export default {
         peacock: 'disabled',
         plum: 'disabled'
       },
-      currentTurn: -1,
-      dieRoll: 0,
-      selectingPlayers: true,
-      envelope: {},
       playerCards: {
         scarlet: [],
         mustard: [],
@@ -107,6 +95,18 @@ export default {
         peacock: [],
         plum: []
       },
+      weaponCoordinates: {
+        candlestick: 'conservatory',
+        knife: 'lounge',
+        pipe: 'kitchen',
+        revolver: 'dining',
+        rope: 'hall',
+        wrench: 'study'
+      },
+      currentTurn: -1,
+      dieRoll: 0,
+      selectingPlayers: true,
+      envelope: {},
       turnPhase: null,
       messages: []
     };
@@ -126,6 +126,10 @@ export default {
     },
     turnPlayerPosition () {
       return this.playerCoordinates[this.turnPlayer];
+    },
+    turnPlayerLastPosition: {
+      get () { return this.lastTurnCoordinates[this.turnPlayer]; },
+      set (coordinates) { this.lastTurnCoordinates[this.turnPlayer] = coordinates }
     },
     humanPlayer () {
       return Object.keys(this.playerSelections).find(key => this.isHumanPlayer(key));
@@ -371,7 +375,7 @@ export default {
     },
     endTurn () {
       this.clearMessages();
-      this.lastTurnCoordinates[this.turnPlayer] = this.turnPlayerPosition;
+      this.turnPlayerLastPosition = this.turnPlayerPosition;
       this.currentTurn++;
     },
     suggestOptionsShown (shown) {
@@ -402,7 +406,7 @@ export default {
       }
     },
     turnPlayer (player) {
-      if (this.isValidRoom(this.turnPlayerPosition) && this.lastTurnCoordinates[this.turnPlayer] !== this.turnPlayerPosition) {
+      if (this.isValidRoom(this.turnPlayerPosition) && this.turnPlayerLastPosition !== this.turnPlayerPosition) {
         this.turnPhase = this.phases.ROLL_OR_SUGGEST;
       } else {
         this.turnPhase = this.phases.ROLL;
