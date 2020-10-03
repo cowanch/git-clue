@@ -13,6 +13,10 @@
                 @click="showSuggestionOptions=true">
           Make Suggestion
         </button>
+        <button v-if="showEndTurn"
+                @click="() => $emit('end-turn')">
+          End Turn
+        </button>
       </div>
       <div v-if="showSuggestionOptions">
         <clue-options v-model="suggestion"
@@ -94,6 +98,9 @@ export default {
     },
     playerRoom () {
       return this.isValidRoom(this.playerPosition) ? this.playerPosition : '';
+    },
+    showEndTurn () {
+      return this.turnPhase === this.phases.END;
     }
   },
   methods: {
@@ -127,8 +134,10 @@ export default {
   },
   watch: {
     turnPhase (phase) {
-      if (phase === this.phases.ROLL) {
+      if (this.isRollPhase(phase)) {
         this.dieValue = 0;
+      }
+      if (!this.isSuggestionPhase(phase)) {
         this.showSuggestionOptions = false;
       }
     },

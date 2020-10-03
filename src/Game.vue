@@ -305,7 +305,7 @@ export default {
         if (this.playerSelections[this.turnPlayer] === 'human') {
           this.addMessage(`${this.suspects[player]} reveals ${this.getCardText(card)}`);
         }
-        this.endTurn();
+        this.turnPhase = this.phases.END;
       }
     },
     getDisprovingCards (cards, suggestion) {
@@ -328,6 +328,7 @@ export default {
       }
     },
     endTurn () {
+      this.clearMessages();
       this.currentTurn++;
     },
     suggestOptionsShown (shown) {
@@ -344,6 +345,9 @@ export default {
     },
     addMessage (message) {
       this.messages.push(message);
+    },
+    clearMessages () {
+      this.messages = [];
     }
   },
   watch: {
@@ -354,12 +358,13 @@ export default {
         this.currentTurn = this.turnOrder.length-1;
       }
     },
-    turnPlayer () {
+    turnPlayer (player) {
       if (this.isValidRoom(this.turnPlayerPosition)) {
         this.turnPhase = this.phases.ROLL_OR_SUGGEST;
       } else {
         this.turnPhase = this.phases.ROLL;
       }
+      this.addMessage(`It is ${this.suspects[player]}'s turn`)
     },
     playerSelections: {
       handler (selected) {
