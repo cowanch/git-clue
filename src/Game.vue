@@ -13,13 +13,15 @@
                      @finish="selectingPlayers=false"/>
       <player-panel v-else
                     :cards="playerCards[humanPlayer]"
+                    :card-selection="cardSelection"
                     :turn-phase="turnPhase"
                     :player-position="this.turnPlayerPosition"
                     :messages="messages"
                     @die-rolled="rollPhase"
                     @suggest="suggestPhase"
                     @end-turn="endTurn"
-                    @show-suggest-options="suggestOptionsShown"/>
+                    @show-suggest-options="suggestOptionsShown"
+                    @disprove="disprovePhase"/>
     </div>
   </div>
 </template>
@@ -291,11 +293,13 @@ export default {
       // Move the suggested weapon into the suggested room
       this.weaponCoordinates[suggestion.weapon] = suggestion.room;
       let turnIter = (this.currentTurn + 1) % this.turnOrder.length;
+      let disproved = false;
       while (turnIter !== this.currentTurn) {
         let currentPlayer = this.turnOrder[turnIter];
         let cards = this.playerCards[currentPlayer];
         let disprovingCards = this.getDisprovingCards(cards, suggestion);
         if (disprovingCards.length > 0) {
+          disproved = true;
           this.addMessage(`${this.suspects[currentPlayer]} can disprove the suggestion`);
           this.handleDisprovingCards(currentPlayer, disprovingCards);
           break;
@@ -304,10 +308,14 @@ export default {
         }
         turnIter = (turnIter + 1) % this.turnOrder.length;
       }
+      if (!disproved) {
+        this.turnPhase = this.phases.END;
+      }
     },
     handleDisprovingCards (player, cards) {
       if (this.playerSelections[player] === 'human') {
-        this.turnPhase = 'disprove_suggestion';
+        this.turnPhase = this.phases.DISPROVE;
+        this.cardSelection = cards;
       } else if (this.playerSelections[player] === 'cpu_easy' || this.playerSelections[player] === 'cpu_medium' || this.playerSelections[player] === 'cpu_hard') {
         let rand = Math.floor(Math.random() * cards.length);
         let card = cards[rand];
@@ -330,6 +338,14 @@ export default {
         disprovingCards.push(room);
       }
       return disprovingCards;
+    },
+    disprovePhase (card) {
+      if (this.turnPhase === this.phases.DISPROVE) {
+        // Do something here handling CPU users receiving a clue
+        this.cardSelection = [];
+        this.addMessage(`${this.suspects[this.humanPlayer]} reveals ${this.getCardText(card)} to ${this.suspects[this.turnPlayer]}`);
+        this.turnPhase = this.phases.END;
+      }
     },
     movePlayerTo (player, moveTo) {
       if (this.playerCoordinates.hasOwnProperty(player)) {

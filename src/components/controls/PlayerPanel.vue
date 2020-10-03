@@ -19,13 +19,15 @@
                 :turn-phase="turnPhase"
                 :player-position="playerPosition"
                 :messages="messages"
+                :card-selection="cardSelection"
+                @disprove="card => $emit('disprove', card)"
                 @die-rolled="roll => $emit('die-rolled', roll)"
                 @end-turn="() => $emit('end-turn')"
                 @show-suggest-options="show => $emit('show-suggest-options', show)"
                 @suggest="suggestion => $emit('suggest', suggestion)"/>
     <notepad v-show="isTabOpen('notepad')"
              class="css-panel"/>
-    <player-cards v-show="isTabOpen('cards')"
+    <card-display v-show="isTabOpen('cards')"
                   :cards="cards"/>
   </div>
 </template>
@@ -60,7 +62,7 @@
 </style>
 
 <script>
-import PlayerCards from '@/components/controls/panel/PlayerCards';
+import CardDisplay from '@/components/controls/panel/CardDisplay';
 import Notepad from '@/components/controls/panel/Notepad';
 import GamePanel from '@/components/controls/panel/GamePanel';
 
@@ -68,6 +70,7 @@ export default {
   name: 'PlayerPanel',
   props: {
     cards: Array,
+    cardSelection: Array,
     turnPhase: String,
     playerPosition: [String, Object],
     messages: Array
@@ -91,7 +94,7 @@ export default {
     }
   },
   components: {
-    PlayerCards,
+    CardDisplay,
     Notepad,
     GamePanel
   }

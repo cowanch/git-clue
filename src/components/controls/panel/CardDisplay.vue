@@ -3,19 +3,23 @@
     <card v-for="(card) in cards"
           :key="card"
           class="css-card"
+          :class="{'css-hover':selection}"
           :size="cardScale"
-          :id="card"/>
+          :id="card"
+          @click="() => emitCardSelected(card)"/>
   </div>
 </template>
 
 <style scoped>
 .css-player-cards {
-  background: lightgray;
   display: grid;
   grid-template-columns: auto auto auto auto auto auto;
 }
 .css-card {
   margin: 10px 10px;
+}
+.css-hover {
+  cursor: pointer;
 }
 </style>
 
@@ -23,14 +27,20 @@
 import Card from '@/components/pieces/Card';
 
 export default {
-  name: 'PlayerCards',
+  name: 'CardDisplay',
   props: {
-    cards: Array
+    cards: Array,
+    selection: Boolean
   },
   data () {
     return {
       cardScale: 2
     };
+  },
+  methods: {
+    emitCardSelected (card) {
+      this.$emit('card-selected', card);
+    }
   },
   components: {
     Card

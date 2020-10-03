@@ -26,6 +26,9 @@
           Suggest
         </button>
       </div>
+      <card-display :cards="cardSelection"
+                    :selection="true"
+                    @card-selected="disprove"/>
     </div>
     <textarea readonly
               :value="messagesString"/>
@@ -48,6 +51,7 @@ textarea {
 <script>
 import Die from '@/components/pieces/Die';
 import ClueOptions from '@/components/controls/panel/ClueOptions';
+import CardDisplay from '@/components/controls/panel/CardDisplay';
 import rooms from '@/mixins/rooms.mixin';
 import turnPhases from '@/mixins/turnPhases.mixin';
 
@@ -59,7 +63,8 @@ export default {
   props: {
     turnPhase: String,
     playerPosition: [String, Object],
-    messages: Array
+    messages: Array,
+    cardSelection: Array
   },
   data () {
     return {
@@ -130,6 +135,9 @@ export default {
           room: this.playerRoom
         });
       }
+    },
+    disprove (card) {
+      this.$emit('disprove', card);
     }
   },
   watch: {
@@ -147,7 +155,8 @@ export default {
   },
   components: {
     Die,
-    ClueOptions
+    ClueOptions,
+    CardDisplay
   }
 };
 </script>
