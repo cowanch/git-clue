@@ -12,7 +12,7 @@
                      v-model="playerSelections"
                      @finish="selectingPlayers=false"/>
       <player-panel v-else
-                    :cards="playerCards[turnPlayer]"
+                    :cards="playerCards[humanPlayer]"
                     :turn-phase="turnPhase"
                     :player-position="this.turnPlayerPosition"
                     :messages="messages"
@@ -115,6 +115,9 @@ export default {
     },
     turnPlayerPosition () {
       return this.playerCoordinates[this.turnPlayer];
+    },
+    humanPlayer () {
+      return Object.keys(this.playerSelections).find(key => this.playerSelections[key] === 'human');
     },
     availableMoves () {
       let availableMoves = {};
@@ -281,6 +284,12 @@ export default {
     suggestPhase (suggestion) {
       // Suggestion made, find a player that can disprove it
       this.addSuggestionMessage(suggestion);
+      // Move the suggested suspect into the suggested room
+      if (this.playerCoordinates[suggestion.suspect]) {
+        this.playerCoordinates[suggestion.suspect] = suggestion.room;
+      }
+      // Move the suggested weapon into the suggested room
+      this.weaponCoordinates[suggestion.weapon] = suggestion.room;
       let turnIter = (this.currentTurn + 1) % this.turnOrder.length;
       while (turnIter !== this.currentTurn) {
         let currentPlayer = this.turnOrder[turnIter];
