@@ -50,6 +50,7 @@ import PlayerPanel from '@/components/controls/PlayerPanel';
 // Specs
 import playerPositions from '@/specs/startingPositions';
 import grid from '@/specs/boardSpecs';
+import {playerTypes} from '@/specs/playerTypeSpecs';
 // Utils
 import shuffle from '@/utils/shuffle';
 // Mixins
@@ -119,7 +120,7 @@ export default {
       return this.playerCoordinates[this.turnPlayer];
     },
     humanPlayer () {
-      return Object.keys(this.playerSelections).find(key => this.playerSelections[key] === 'human');
+      return Object.keys(this.playerSelections).find(key => this.isHumanPlayer(key));
     },
     availableMoves () {
       let availableMoves = {};
@@ -164,9 +165,9 @@ export default {
     this.currentTurn = 0;
   },
   mounted () {
-    this.playerSelections.scarlet = 'human';
-    this.playerSelections.mustard = 'cpu_easy';
-    this.playerSelections.white = 'cpu_easy';
+    this.playerSelections.scarlet = playerTypes.HUMAN;
+    this.playerSelections.mustard = playerTypes.CPU_EASY;
+    this.playerSelections.white = playerTypes.CPU_EASY;
   },
   methods: {
     findAvailableMoves (start, moves) {
@@ -247,6 +248,14 @@ export default {
     isPlayerOnPosition (position) {
       return Object.values(this.playerCoordinates).some(playerPosition => playerPosition !== null && position.x === playerPosition.x && position.y === playerPosition.y);
     },
+    isHumanPlayer (player) {
+      return this.playerSelections[player] === playerTypes.HUMAN;
+    },
+    isCpuPlayer (player) {
+      return this.playerSelections[player] === playerTypes.CPU_EASY ||
+             this.playerSelections[player] === playerTypes.CPU_MEDIUM ||
+             this.playerSelections[player] === playerTypes.CPU_HARD;
+    },
     getRemainingDeckAfterPickingEnvelopeCards () {
       let suspectDeck = shuffle(Object.keys(this.suspects));
       let weaponDeck = shuffle(Object.keys(this.weapons));
@@ -313,13 +322,13 @@ export default {
       }
     },
     handleDisprovingCards (player, cards) {
-      if (this.playerSelections[player] === 'human') {
+      if (this.isHumanPlayer(player)) {
         this.turnPhase = this.phases.DISPROVE;
         this.cardSelection = cards;
-      } else if (this.playerSelections[player] === 'cpu_easy' || this.playerSelections[player] === 'cpu_medium' || this.playerSelections[player] === 'cpu_hard') {
+      } else if (this.isCpuPlayer(player)) {
         let rand = Math.floor(Math.random() * cards.length);
         let card = cards[rand];
-        if (this.playerSelections[this.turnPlayer] === 'human') {
+        if (this.isHumanPlayer(this.turnPlayer)) {
           this.addMessage(`${this.suspects[player]} reveals ${this.getCardText(card)}`);
         }
         this.turnPhase = this.phases.END;

@@ -30,6 +30,8 @@ td {
 </style>
 
 <script>
+import {playerTypes} from '@/specs/playerTypeSpecs';
+
 export default {
   name: 'PlayerSelect',
   props: {
@@ -42,7 +44,13 @@ export default {
   },
   computed: {
     options () {
-      return { disabled: 'Disabled', human: 'Human Player', cpu_easy: 'CPU Easy', cpu_medium: 'CPU Medium', cpu_hard: 'CPU Hard' };
+      return {
+        disabled: 'Disabled',
+        [playerTypes.HUMAN]: 'Human Player',
+        [playerTypes.CPU_EASY]: 'CPU Easy',
+        [playerTypes.CPU_MEDIUM]: 'CPU Medium',
+        [playerTypes.CPU_HARD]: 'CPU Hard'
+      };
     },
     players () {
       return { scarlet: 'Miss Scarlet', mustard: 'Colonel Mustard', white: 'Mrs. White', green: 'Mr. Green', peacock: 'Miss Peacock', plum: 'Prof. Plum' };
