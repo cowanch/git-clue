@@ -1,21 +1,25 @@
 <template>
-  <div class="css-panel">
+  <div class="css-player-cards">
     <card v-for="(card) in cards"
           :key="card"
           class="css-card"
+          :class="{'css-hover':selection}"
           :size="cardScale"
-          :id="card"/>
+          :id="card"
+          @click="() => emitCardSelected(card)"/>
   </div>
 </template>
 
 <style scoped>
-.css-panel {
-  background: lightgray;
+.css-player-cards {
   display: grid;
   grid-template-columns: auto auto auto auto auto auto;
 }
 .css-card {
   margin: 10px 10px;
+}
+.css-hover {
+  cursor: pointer;
 }
 </style>
 
@@ -23,14 +27,22 @@
 import Card from '@/components/pieces/Card';
 
 export default {
-  name: 'PlayerCards',
+  name: 'CardDisplay',
   props: {
-    cards: Array
+    cards: Array,
+    selection: Boolean
   },
   data () {
     return {
       cardScale: 2
     };
+  },
+  methods: {
+    emitCardSelected (card) {
+      if (this.selection) {
+        this.$emit('card-selected', card);
+      }
+    }
   },
   components: {
     Card

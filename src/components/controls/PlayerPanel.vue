@@ -15,10 +15,19 @@
       </button>
     </div>
     <game-panel v-show="isTabOpen('game')"
+                class="css-panel"
                 :turn-phase="turnPhase"
-                @die-rolled="roll => $emit('die-rolled', roll)"/>
-    <notepad v-show="isTabOpen('notepad')"/>
-    <player-cards v-show="isTabOpen('cards')"
+                :player-position="playerPosition"
+                :messages="messages"
+                :card-selection="cardSelection"
+                @disprove="card => $emit('disprove', card)"
+                @die-rolled="roll => $emit('die-rolled', roll)"
+                @end-turn="() => $emit('end-turn')"
+                @show-suggest-options="show => $emit('show-suggest-options', show)"
+                @suggest="suggestion => $emit('suggest', suggestion)"/>
+    <notepad v-show="isTabOpen('notepad')"
+             class="css-panel"/>
+    <card-display v-show="isTabOpen('cards')"
                   :cards="cards"/>
   </div>
 </template>
@@ -47,10 +56,13 @@
 .css-tab button.active {
   background-color: #ccc;
 }
+.css-panel {
+  margin-top: 20px;
+}
 </style>
 
 <script>
-import PlayerCards from '@/components/controls/panel/PlayerCards';
+import CardDisplay from '@/components/controls/panel/CardDisplay';
 import Notepad from '@/components/controls/panel/Notepad';
 import GamePanel from '@/components/controls/panel/GamePanel';
 
@@ -58,7 +70,10 @@ export default {
   name: 'PlayerPanel',
   props: {
     cards: Array,
-    turnPhase: String
+    cardSelection: Array,
+    turnPhase: String,
+    playerPosition: [String, Object],
+    messages: Array
   },
   data () {
     return {
@@ -79,7 +94,7 @@ export default {
     }
   },
   components: {
-    PlayerCards,
+    CardDisplay,
     Notepad,
     GamePanel
   }

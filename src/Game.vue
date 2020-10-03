@@ -11,9 +11,16 @@
                      v-model="playerSelections"
                      @finish="selectingPlayers=false"/>
       <player-panel v-else
-                    :cards="playerCards[turnPlayer]"
+                    :cards="playerCards[humanPlayer]"
+                    :card-selection="cardSelection"
                     :turn-phase="turnPhase"
-                    @die-rolled="rollPhase"/>
+                    :player-position="this.turnPlayerPosition"
+                    :messages="messages"
+                    @die-rolled="rollPhase"
+                    @suggest="suggestPhase"
+                    @end-turn="endTurn"
+                    @show-suggest-options="suggestOptionsShown"
+                    @disprove="disprovePhase"/>
     </div>
   </div>
 </template>
@@ -40,54 +47,32 @@ import Board from '@/components/board/Board';
 import PlayerSelect from '@/components/controls/PlayerSelect';
 import PlayerPanel from '@/components/controls/PlayerPanel';
 // Specs
-import playerPositions from '@/specs/startingPositions';
+import startingPositions from '@/specs/startingPositions';
 import grid from '@/specs/boardSpecs';
-import {deck} from '@/specs/cardSpecs';
-import {phases} from '@/specs/turnSpecs';
+import {playerTypes} from '@/specs/playerTypeSpecs';
 // Utils
 import shuffle from '@/utils/shuffle';
+// Mixins
+import rooms from '@/mixins/rooms.mixin';
+import deckUtil from '@/mixins/deck.mixin';
+import turnPhases from '@/mixins/turnPhases.mixin';
 
 export default {
   name: 'Game',
+  mixins: [rooms,deckUtil,turnPhases],
   data () {
     return {
-      playerCoordinates: {
-        scarlet: null,
-        mustard: null,
-        white: null,
-        green: null,
-        peacock: null,
-        plum: null
-      },
-      weaponCoordinates: {
-        candlestick: 'conservatory',
-        knife: 'lounge',
-        pipe: 'kitchen',
-        revolver: 'dining',
-        rope: 'hall',
-        wrench: 'study'
-      },
-      playerSelections: {
-        scarlet: 'disabled',
-        mustard: 'disabled',
-        white: 'disabled',
-        green: 'disabled',
-        peacock: 'disabled',
-        plum: 'disabled'
-      },
+      playerCoordinates: {},
+      lastTurnCoordinates: {},
+      playerSelections: {},
+      playerCards: {},
+      weaponCoordinates: {},
       currentTurn: -1,
       dieRoll: 0,
       selectingPlayers: true,
       envelope: {},
-      playerCards: {
-        scarlet: [],
-        mustard: [],
-        white: [],
-        green: [],
-        peacock: [],
-        plum: []
-      },
-      turnPhase: phases.ROLL
+      turnPhase: null,
+      messages: []
     };
   },
   computed: {
@@ -102,6 +87,16 @@ export default {
     },
     turnPlayer () {
       return this.turnOrder[this.currentTurn];
+    },
+    turnPlayerPosition () {
+      return this.playerCoordinates[this.turnPlayer];
+    },
+    turnPlayerLastPosition: {
+      get () { return this.lastTurnCoordinates[this.turnPlayer]; },
+      set (coordinates) { this.lastTurnCoordinates[this.turnPlayer] = coordinates }
+    },
+    humanPlayer () {
+      return Object.keys(this.playerSelections).find(key => this.isHumanPlayer(key));
     },
     availableMoves () {
       let availableMoves = {};
@@ -142,6 +137,20 @@ export default {
     }
   },
   created () {
+    // Set up the different player settings
+    Object.keys(this.suspects).forEach(player => {
+      this.$set(this.playerCoordinates, player, null);
+      this.$set(this.lastTurnCoordinates, player, null);
+      this.$set(this.playerSelections, player, 'disabled');
+      this.$set(this.playerCards, player, []);
+    });
+    let roomKeys = Object.keys(this.rooms);
+    Object.keys(this.weapons).forEach(weapon => {
+      let rand = Math.floor(Math.random() * roomKeys.length);
+      this.$set(this.weaponCoordinates, weapon, roomKeys[rand]);
+      roomKeys.splice(rand, 1);
+    });
+    this.addMessage('Welcome to Clue!');
     this.currentTurn = 0;
   },
   methods: {
@@ -223,10 +232,18 @@ export default {
     isPlayerOnPosition (position) {
       return Object.values(this.playerCoordinates).some(playerPosition => playerPosition !== null && position.x === playerPosition.x && position.y === playerPosition.y);
     },
+    isHumanPlayer (player) {
+      return this.playerSelections[player] === playerTypes.HUMAN;
+    },
+    isCpuPlayer (player) {
+      return this.playerSelections[player] === playerTypes.CPU_EASY ||
+             this.playerSelections[player] === playerTypes.CPU_MEDIUM ||
+             this.playerSelections[player] === playerTypes.CPU_HARD;
+    },
     getRemainingDeckAfterPickingEnvelopeCards () {
-      let suspectDeck = shuffle(Object.keys(deck.suspects));
-      let weaponDeck = shuffle(Object.keys(deck.weapons));
-      let roomDeck = shuffle(Object.keys(deck.rooms));
+      let suspectDeck = shuffle(Object.keys(this.suspects));
+      let weaponDeck = shuffle(Object.keys(this.weapons));
+      let roomDeck = shuffle(Object.keys(this.rooms));
       this.envelope.suspect = suspectDeck.shift();
       this.envelope.weapon = weaponDeck.shift();
       this.envelope.room = roomDeck.shift();
@@ -241,22 +258,115 @@ export default {
       });
     },
     rollPhase (roll) {
-      if (this.turnPhase === phases.ROLL) {
+      if (this.isRollPhase(this.turnPhase)) {
         this.dieRoll = roll;
-        this.turnPhase = phases.MOVE;
+        this.turnPhase = this.phases.MOVE;
       }
     },
     movePhase (moveTo) {
-      if (this.turnPhase === phases.MOVE) {
+      if (this.turnPhase === this.phases.MOVE) {
+        // Move the player and reset the die
         this.movePlayerTo(this.turnPlayer, moveTo);
         this.dieRoll = 0;
-        this.currentTurn++;
+        // Check to see if the player is in a room
+        if (this.isValidRoom(this.turnPlayerPosition)) {
+          this.turnPhase = this.phases.SUGGEST;
+        } else {
+          this.endTurn();
+        }
+      }
+    },
+    suggestPhase (suggestion) {
+      // Suggestion made, find a player that can disprove it
+      this.addSuggestionMessage(suggestion);
+      // Move the suggested suspect into the suggested room
+      if (this.playerCoordinates[suggestion.suspect]) {
+        this.playerCoordinates[suggestion.suspect] = suggestion.room;
+      }
+      // Move the suggested weapon into the suggested room
+      this.weaponCoordinates[suggestion.weapon] = suggestion.room;
+      let turnIter = (this.currentTurn + 1) % this.turnOrder.length;
+      let disproved = false;
+      while (turnIter !== this.currentTurn) {
+        let currentPlayer = this.turnOrder[turnIter];
+        let cards = this.playerCards[currentPlayer];
+        let disprovingCards = this.getDisprovingCards(cards, suggestion);
+        if (disprovingCards.length > 0) {
+          disproved = true;
+          this.addMessage(`${this.suspects[currentPlayer]} can disprove the suggestion`);
+          this.handleDisprovingCards(currentPlayer, disprovingCards);
+          break;
+        } else {
+          this.addMessage(`${this.suspects[currentPlayer]} cannot disprove the suggestion`);
+        }
+        turnIter = (turnIter + 1) % this.turnOrder.length;
+      }
+      if (!disproved) {
+        this.turnPhase = this.phases.END;
+      }
+    },
+    handleDisprovingCards (player, cards) {
+      if (this.isHumanPlayer(player)) {
+        this.turnPhase = this.phases.DISPROVE;
+        this.cardSelection = cards;
+      } else if (this.isCpuPlayer(player)) {
+        let rand = Math.floor(Math.random() * cards.length);
+        let card = cards[rand];
+        if (this.isHumanPlayer(this.turnPlayer)) {
+          this.addMessage(`${this.suspects[player]} reveals ${this.getCardText(card)}`);
+        }
+        this.turnPhase = this.phases.END;
+      }
+    },
+    getDisprovingCards (cards, suggestion) {
+      let disprovingCards = [];
+      let { suspect, weapon, room } = suggestion;
+      if (cards.includes(suspect)) {
+        disprovingCards.push(suspect);
+      }
+      if (cards.includes(weapon)) {
+        disprovingCards.push(weapon);
+      }
+      if (cards.includes(room)) {
+        disprovingCards.push(room);
+      }
+      return disprovingCards;
+    },
+    disprovePhase (card) {
+      if (this.turnPhase === this.phases.DISPROVE) {
+        // Do something here handling CPU users receiving a clue
+        this.cardSelection = [];
+        this.addMessage(`${this.suspects[this.humanPlayer]} reveals ${this.getCardText(card)} to ${this.suspects[this.turnPlayer]}`);
+        this.turnPhase = this.phases.END;
       }
     },
     movePlayerTo (player, moveTo) {
       if (this.playerCoordinates.hasOwnProperty(player)) {
         this.playerCoordinates[player] = moveTo;
       }
+    },
+    endTurn () {
+      this.clearMessages();
+      this.turnPlayerLastPosition = this.turnPlayerPosition;
+      this.currentTurn++;
+    },
+    suggestOptionsShown (shown) {
+      if (shown && this.turnPhase === this.phases.ROLL_OR_SUGGEST) {
+        this.turnPhase = this.phases.SUGGEST;
+      }
+    },
+    addSuggestionMessage (suggestion) {
+      let {suspect, weapon, room} = suggestion;
+      let suspectText = this.suspects[suspect];
+      let weaponText = this.weapons[weapon];
+      let roomText = this.rooms[room];
+      this.addMessage(`${this.suspects[this.turnPlayer]} suggests ${suspectText} with the ${weaponText} in the ${roomText}`);
+    },
+    addMessage (message) {
+      this.messages.push(message);
+    },
+    clearMessages () {
+      this.messages = [];
     }
   },
   watch: {
@@ -266,12 +376,19 @@ export default {
       } else if (turn < 0) {
         this.currentTurn = this.turnOrder.length-1;
       }
-      this.turnPhase = phases.ROLL;
+    },
+    turnPlayer (player) {
+      if (this.isValidRoom(this.turnPlayerPosition) && this.turnPlayerLastPosition !== this.turnPlayerPosition) {
+        this.turnPhase = this.phases.ROLL_OR_SUGGEST;
+      } else {
+        this.turnPhase = this.phases.ROLL;
+      }
+      this.addMessage(`It is ${this.suspects[player]}'s turn`)
     },
     playerSelections: {
       handler (selected) {
         if (this.selectingPlayers) {
-          Object.keys(this.playerCoordinates).forEach(player => this.playerCoordinates[player] = selected[player] !== 'disabled' ? playerPositions[player] : null);
+          Object.keys(this.playerCoordinates).forEach(player => this.playerCoordinates[player] = selected[player] !== 'disabled' ? startingPositions[player] : null);
         }
       },
       deep: true
