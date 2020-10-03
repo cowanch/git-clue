@@ -68,8 +68,7 @@ export default {
   },
   data () {
     return {
-      // dieValue: 0,
-      dieValue: 1,
+      dieValue: 0,
       showSuggestionOptions: false,
       suggestion: {
         suspect: '',

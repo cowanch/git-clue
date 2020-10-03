@@ -153,11 +153,6 @@ export default {
     this.addMessage('Welcome to Clue!');
     this.currentTurn = 0;
   },
-  mounted () {
-    this.playerSelections.scarlet = playerTypes.HUMAN;
-    this.playerSelections.mustard = playerTypes.CPU_EASY;
-    this.playerSelections.white = playerTypes.CPU_EASY;
-  },
   methods: {
     findAvailableMoves (start, moves) {
       let pathStart = [];
@@ -394,8 +389,6 @@ export default {
       handler (selected) {
         if (this.selectingPlayers) {
           Object.keys(this.playerCoordinates).forEach(player => this.playerCoordinates[player] = selected[player] !== 'disabled' ? startingPositions[player] : null);
-          this.playerCoordinates.scarlet = 'ballroom';
-          this.selectingPlayers = false;
         }
       },
       deep: true

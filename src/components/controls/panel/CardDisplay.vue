@@ -39,7 +39,9 @@ export default {
   },
   methods: {
     emitCardSelected (card) {
-      this.$emit('card-selected', card);
+      if (this.selection) {
+        this.$emit('card-selected', card);
+      }
     }
   },
   components: {
