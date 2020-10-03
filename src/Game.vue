@@ -71,6 +71,14 @@ export default {
         peacock: null,
         plum: null
       },
+      lastTurnCoordinates: {
+        scarlet: null,
+        mustard: null,
+        white: null,
+        green: null,
+        peacock: null,
+        plum: null
+      },
       weaponCoordinates: {
         candlestick: 'conservatory',
         knife: 'lounge',
@@ -363,6 +371,7 @@ export default {
     },
     endTurn () {
       this.clearMessages();
+      this.lastTurnCoordinates[this.turnPlayer] = this.turnPlayerPosition;
       this.currentTurn++;
     },
     suggestOptionsShown (shown) {
@@ -393,7 +402,7 @@ export default {
       }
     },
     turnPlayer (player) {
-      if (this.isValidRoom(this.turnPlayerPosition)) {
+      if (this.isValidRoom(this.turnPlayerPosition) && this.lastTurnCoordinates[this.turnPlayer] !== this.turnPlayerPosition) {
         this.turnPhase = this.phases.ROLL_OR_SUGGEST;
       } else {
         this.turnPhase = this.phases.ROLL;
