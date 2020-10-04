@@ -9,7 +9,8 @@
           <select v-model="selections[pkey]">
             <option v-for="(option, okey) in options"
                     :value="okey"
-                    :key="okey">
+                    :key="okey"
+                    :disabled="isOptionDisabled(okey)">
               {{ option }}
             </option>
           </select>
@@ -60,11 +61,19 @@ export default {
     },
     isMinimumSelected () {
       return Object.values(this.value).filter(val => val !== 'disabled').length >= 2;
+    },
+    isHumanPlayerSelected () {
+      return Object.values(this.selections).some(selection => selection === playerTypes.HUMAN);
     }
   },
   data () {
     return {
       selections: this.value
+    }
+  },
+  methods: {
+    isOptionDisabled (value) {
+      return value === playerTypes.HUMAN && this.isHumanPlayerSelected;
     }
   },
   watch: {
