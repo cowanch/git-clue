@@ -42,7 +42,7 @@
   </div>
 </template>
 
-<style>
+<style scoped>
 .css-suggestion-options {
   display: grid;
   grid-template-columns: auto auto;

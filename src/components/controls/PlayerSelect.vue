@@ -27,6 +27,9 @@
 td {
   padding: 5px 10px 5px 0px;
 }
+button {
+  margin-top: 2em;
+}
 </style>
 
 <script>
