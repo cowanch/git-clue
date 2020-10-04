@@ -46,6 +46,14 @@ text {
   text-anchor: middle;
   dominant-baseline: middle
 }
+
+text.css-passage {
+  font-family: Helvetica, sans-serif;
+  font-weight: bold;
+  font-size: 10px;
+  text-anchor: middle;
+  dominant-baseline: middle
+}
 </style>
 
 <script>

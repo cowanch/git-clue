@@ -60,7 +60,7 @@ export default {
       return { scarlet: 'Miss Scarlet', mustard: 'Colonel Mustard', white: 'Mrs. White', green: 'Mr. Green', peacock: 'Miss Peacock', plum: 'Prof. Plum' };
     },
     isMinimumSelected () {
-      return Object.values(this.value).filter(val => val !== 'disabled').length >= 2;
+      return Object.values(this.value).filter(val => val !== playerTypes.DISABLED).length >= 3;
     },
     isHumanPlayerSelected () {
       return Object.values(this.selections).some(selection => selection === playerTypes.HUMAN);

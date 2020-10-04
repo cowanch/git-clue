@@ -141,7 +141,7 @@ export default {
     Object.keys(this.suspects).forEach(player => {
       this.$set(this.playerCoordinates, player, null);
       this.$set(this.lastTurnCoordinates, player, null);
-      this.$set(this.playerSelections, player, 'disabled');
+      this.$set(this.playerSelections, player, playerTypes.DISABLED);
       this.$set(this.playerCards, player, []);
     });
     let roomKeys = Object.keys(this.rooms);
@@ -388,7 +388,7 @@ export default {
     playerSelections: {
       handler (selected) {
         if (this.selectingPlayers) {
-          Object.keys(this.playerCoordinates).forEach(player => this.playerCoordinates[player] = selected[player] !== 'disabled' ? startingPositions[player] : null);
+          Object.keys(this.playerCoordinates).forEach(player => this.playerCoordinates[player] = selected[player] !== playerTypes.DISABLED ? startingPositions[player] : null);
         }
       },
       deep: true
