@@ -14,6 +14,7 @@
 .css-player-cards {
   display: grid;
   grid-template-columns: auto auto;
+  grid-template-rows: max-content;
 }
 .css-card {
   margin: 10px 10px;
