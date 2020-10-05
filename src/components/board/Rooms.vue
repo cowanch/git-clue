@@ -10,7 +10,8 @@
        @click="$emit('click', 'study')">
       <polygon :points="`0,0 ${offset(6)},0 ${offset(6)},${offset(1)} ${offset(7)},${offset(1)} ${offset(7)},${offset(4)} 0,${offset(4)}`"
                :class="{ highlight: isAvailableMove('study') }"/>
-      <rect :class="{ highlight: true }"
+      <!-- Secret Passage to Kitchen -->
+      <rect :class="{ highlight: isAvailablePassage('kitchen') }"
             :width="cellSize" :height="cellSize"
             :transform="getXYTranslation(0, offsetScale+3)"
             @click="$emit('passage', 'kitchen')"/>
@@ -70,7 +71,8 @@
       <polygon :points="`${offset(1)},0 ${offset(5)},0 ${offset(5)},${cell(1)} ${offset(6)},${cell(1)} ${offset(6)},${offset(5)}
                         0,${offset(5)} 0,${cell(1)} ${offset(1)},${cell(1)}`"
                :class="{ highlight: isAvailableMove('conservatory') }"/>
-      <rect :class="{ highlight: true }"
+      <!-- Secret Passage to Lounge -->
+      <rect :class="{ highlight: isAvailablePassage('lounge') }"
             :width="cellSize" :height="cellSize"
             :transform="getXYTranslation(offsetScale+1, 0)"
             @click="$emit('passage', 'lounge')"/>
@@ -115,7 +117,8 @@
        @click="$emit('click', 'kitchen')">
       <polygon :points="`0,0 ${cell(5)},0 ${cell(5)},${cell(1)} ${offset(6)},${cell(1)} ${offset(6)},${offset(6)} 0,${offset(6)}`"
                :class="{ highlight: isAvailableMove('kitchen') }"/>
-      <rect :class="{ highlight: true }"
+      <!-- Secret Passage to Study -->
+      <rect :class="{ highlight: isAvailablePassage('study') }"
             :width="cellSize" :height="cellSize"
             :transform="getXYTranslation(0, offsetScale+5)"
             @click="$emit('passage', 'study')"/>
@@ -152,7 +155,8 @@
        @click="$emit('click', 'lounge')">
       <polygon :points="`${cell(1)},0 ${offset(7)},0 ${offset(7)},${offset(6)} 0,${offset(6)} 0,${offset(1)} ${cell(1)},${offset(1)}`"
                :class="{ highlight: isAvailableMove('lounge') }"/>
-      <rect :class="{ highlight: true }"
+      <!-- Secret Passage to Conservatory -->
+      <rect :class="{ highlight: isAvailablePassage('conservatory') }"
             :width="cellSize" :height="cellSize"
             :transform="getXYTranslation(offsetScale+6, offsetScale+5)"
             @click="$emit('passage', 'conservatory')"/>

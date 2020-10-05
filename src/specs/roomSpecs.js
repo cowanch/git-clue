@@ -140,3 +140,13 @@ export const roomCoordinates = {
 let names = {};
 Object.values(roomCoordinates).forEach(rooms => Object.keys(rooms).forEach(roomName => names[roomName] = true));
 export const roomNames = Object.keys(names);
+
+let passages = {};
+let joinedRooms = [['study', 'kitchen'], ['lounge', 'conservatory']];
+joinedRooms.forEach(rooms => {
+  if (rooms.length === 2) {
+    passages[rooms[0]] = rooms[1];
+    passages[rooms[1]] = rooms[0];
+  }
+});
+export const secretPassages = passages;

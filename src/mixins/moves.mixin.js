@@ -15,6 +15,12 @@ export default {
       } else {
         return this.availableMoves[moveTo];
       }
+    },
+    isAvailablePassage (moveTo) {
+      if (!this.isCoordinates(moveTo)) {
+        return this.availableMoves[`passage-${moveTo}`];
+      }
+      return false;
     }
   }
 };

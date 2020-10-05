@@ -146,6 +146,8 @@ export default {
       }
       if (!this.isSuggestionPhase(phase)) {
         this.showSuggestionOptions = false;
+        this.suggestion.suspect = '';
+        this.suggestion.weapon = '';
       }
     },
     showSuggestionOptions (show) {
