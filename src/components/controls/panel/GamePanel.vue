@@ -1,37 +1,33 @@
 <template>
-  <div>
-    <div class="css-game-panel">
-      <die v-if="showDie"
-           :value="dieValue"/>
-      <div>
-        <button v-if="showDie"
-                @click="rollDie"
-                :disabled="rollDisabled">
-          Roll Die
-        </button>
-        <button v-if="showSuggestionPrompt"
-                @click="showSuggestionOptions=true">
-          Make Suggestion
-        </button>
-        <button v-if="showEndTurn"
-                @click="() => $emit('end-turn')">
-          End Turn
-        </button>
-      </div>
-      <div v-if="showSuggestionOptions">
-        <clue-options v-model="suggestion"
-                      :room="playerRoom"/>
-        <button @click="makeSuggestion"
-                :disabled="!suggestionReady">
-          Suggest
-        </button>
-      </div>
-      <card-display :cards="cardSelection"
-                    :selection="true"
-                    @card-selected="disprove"/>
+  <div class="css-game-panel">
+    <die v-if="showDie"
+         :value="dieValue"/>
+    <div>
+      <button v-if="showDie"
+              @click="rollDie"
+              :disabled="rollDisabled">
+        Roll Die
+      </button>
+      <button v-if="showSuggestionPrompt"
+              @click="showSuggestionOptions=true">
+        Make Suggestion
+      </button>
+      <button v-if="showEndTurn"
+              @click="() => $emit('end-turn')">
+        End Turn
+      </button>
     </div>
-    <textarea readonly
-              :value="messagesString"/>
+    <div v-if="showSuggestionOptions">
+      <clue-options v-model="suggestion"
+                    :room="playerRoom"/>
+      <button @click="makeSuggestion"
+              :disabled="!suggestionReady">
+        Suggest
+      </button>
+    </div>
+    <card-display :cards="cardSelection"
+                  :selection="true"
+                  @card-selected="disprove"/>
   </div>
 </template>
 
@@ -63,7 +59,6 @@ export default {
   props: {
     turnPhase: String,
     playerPosition: [String, Object],
-    messages: Array,
     cardSelection: Array
   },
   data () {
@@ -78,13 +73,6 @@ export default {
     };
   },
   computed: {
-    messagesString () {
-      let text = '';
-      if (this.messages) {
-        this.messages.forEach(str => text+=`${str}\n`);
-      }
-      return text;
-    },
     rollDisabled () {
       return !this.isRollPhase(this.turnPhase) || this.isDieRolling;
     },

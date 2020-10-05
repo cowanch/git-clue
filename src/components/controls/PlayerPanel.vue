@@ -18,7 +18,6 @@
                 class="css-panel"
                 :turn-phase="turnPhase"
                 :player-position="playerPosition"
-                :messages="messages"
                 :card-selection="cardSelection"
                 @disprove="card => $emit('disprove', card)"
                 @die-rolled="roll => $emit('die-rolled', roll)"
@@ -29,6 +28,8 @@
              class="css-panel"/>
     <card-display v-show="isTabOpen('cards')"
                   :cards="cards"/>
+    <textarea readonly
+              :value="messagesString"/>
   </div>
 </template>
 
@@ -79,6 +80,15 @@ export default {
     return {
       openTab: 'cards'
     };
+  },
+  computed: {
+    messagesString () {
+      let text = '';
+      if (this.messages) {
+        this.messages.forEach(str => text+=`${str}\n`);
+      }
+      return text;
+    }
   },
   methods: {
     setActiveTab (id) {
