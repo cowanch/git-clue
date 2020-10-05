@@ -5,13 +5,9 @@
               @click="setActiveTab('game')">
         Game
       </button>
-      <button :class="getActiveTabClass('notepad')"
-              @click="setActiveTab('notepad')">
-        Notepad
-      </button>
-      <button :class="getActiveTabClass('cards')"
-              @click="setActiveTab('cards')">
-        Cards
+      <button :class="getActiveTabClass('notepad-cards')"
+              @click="setActiveTab('notepad-cards')">
+        Notepad / Cards
       </button>
     </div>
     <game-panel v-show="isTabOpen('game')"
@@ -24,10 +20,11 @@
                 @end-turn="() => $emit('end-turn')"
                 @show-suggest-options="show => $emit('show-suggest-options', show)"
                 @suggest="suggestion => $emit('suggest', suggestion)"/>
-    <notepad v-show="isTabOpen('notepad')"
-             class="css-panel"/>
-    <card-display v-show="isTabOpen('cards')"
-                  :cards="cards"/>
+    <div class="css-notepad-and-cards"
+         v-show="isTabOpen('notepad-cards')">
+      <notepad class="css-panel"/>
+      <card-display :cards="cards"/>
+    </div>
     <textarea readonly
               :value="messagesString"/>
   </div>
@@ -59,6 +56,10 @@
 }
 .css-panel {
   margin-top: 20px;
+  margin-right: 100px;
+}
+.css-notepad-and-cards {
+  display: flex;
 }
 </style>
 
@@ -78,7 +79,7 @@ export default {
   },
   data () {
     return {
-      openTab: 'cards'
+      openTab: 'notepad-cards'
     };
   },
   computed: {

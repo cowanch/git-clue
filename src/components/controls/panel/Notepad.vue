@@ -83,7 +83,7 @@ td.css-name-col:hover {
 }
 .css-name-col {
   width: 218px;
-  padding: 2px 0px 2px 3%;
+  padding: 2px 0px 2px 15px;
 }
 .css-category-row > td, th {
   font-size: 20px;
