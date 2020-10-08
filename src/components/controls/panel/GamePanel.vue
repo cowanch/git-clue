@@ -16,6 +16,10 @@
               @click="() => $emit('end-turn')">
         End Turn
       </button>
+      <button v-if="showEndTurn"
+              @click="showAccusationOptions=true">
+        Make Accusation
+      </button>
     </div>
     <div v-if="showSuggestionOptions">
       <clue-options v-model="suggestion"
@@ -23,6 +27,16 @@
       <button @click="makeSuggestion"
               :disabled="!suggestionReady">
         Suggest
+      </button>
+    </div>
+    <div v-if="showAccusationOptions">
+      <clue-options v-model="accusation"/>
+      <button @click="makeAccusation"
+              :disabled="!accusationReady">
+        Accuse
+      </button>
+      <button @click="showAccusationOptions=false">
+        Cancel
       </button>
     </div>
     <card-display :cards="cardSelection"
@@ -65,9 +79,15 @@ export default {
     return {
       dieValue: 0,
       showSuggestionOptions: false,
+      showAccusationOptions: false,
       suggestion: {
         suspect: '',
         weapon: ''
+      },
+      accusation: {
+        suspect: '',
+        weapon: '',
+        room: ''
       },
       isDieRolling: false
     };
@@ -88,11 +108,14 @@ export default {
     suggestionReady () {
       return this.suggestion.suspect && this.suggestion.weapon && this.playerRoom;
     },
+    accusationReady () {
+      return this.accusation.suspect && this.accusation.weapon && this.accusation.room;
+    },
     playerRoom () {
       return this.isValidRoom(this.playerPosition) ? this.playerPosition : '';
     },
     showEndTurn () {
-      return this.turnPhase === this.phases.END;
+      return this.turnPhase === this.phases.END && !this.showAccusationOptions;
     }
   },
   methods: {
@@ -121,6 +144,11 @@ export default {
           weapon: this.suggestion.weapon,
           room: this.playerRoom
         });
+      }
+    },
+    makeAccusation () {
+      if (this.accusationReady) {
+        this.$emit('accuse', this.accusation);
       }
     },
     disprove (card) {
