@@ -5,7 +5,8 @@
   <div class="css-container">
     <board :token-coordinates="tokenCoordinates"
            :available-moves="availableMoves"
-           @move="movePhase"/>
+           @move="movePhase"
+           @passage="movePassage"/>
     <div class="css-options">
       <player-select v-if="selectingPlayers"
                      v-model="playerSelections"
@@ -72,7 +73,8 @@ export default {
       selectingPlayers: true,
       envelope: {},
       turnPhase: null,
-      messages: []
+      messages: [],
+      cardSelection: []
     };
   },
   computed: {
@@ -101,10 +103,9 @@ export default {
     availableMoves () {
       let availableMoves = {};
       if (this.dieRoll > 0) {
-        let player = this.turnOrder[this.currentTurn];
-        if (this.playerCoordinates.hasOwnProperty(player)) {
-          availableMoves = this.findAvailableMoves(this.playerCoordinates[player], this.dieRoll);
-        }
+        availableMoves = this.findAvailableMoves(this.turnPlayerPosition, this.dieRoll);
+      } else if (this.isRollPhase(this.turnPhase)) {
+        availableMoves = this.checkSecretPassages(this.turnPlayerPosition);
       }
       return availableMoves;
     },
@@ -141,7 +142,7 @@ export default {
     Object.keys(this.suspects).forEach(player => {
       this.$set(this.playerCoordinates, player, null);
       this.$set(this.lastTurnCoordinates, player, null);
-      this.$set(this.playerSelections, player, 'disabled');
+      this.$set(this.playerSelections, player, playerTypes.DISABLED);
       this.$set(this.playerCards, player, []);
     });
     let roomKeys = Object.keys(this.rooms);
@@ -232,6 +233,14 @@ export default {
     isPlayerOnPosition (position) {
       return Object.values(this.playerCoordinates).some(playerPosition => playerPosition !== null && position.x === playerPosition.x && position.y === playerPosition.y);
     },
+    checkSecretPassages (position) {
+      let availablePassage = {};
+      let room = this.getSecretPassageRoom(position);
+      if (room) {
+        availablePassage[`passage-${room}`] = true;
+      }
+      return availablePassage;
+    },
     isHumanPlayer (player) {
       return this.playerSelections[player] === playerTypes.HUMAN;
     },
@@ -273,6 +282,16 @@ export default {
           this.turnPhase = this.phases.SUGGEST;
         } else {
           this.endTurn();
+        }
+      }
+    },
+    movePassage (moveTo) {
+      if (this.isRollPhase(this.turnPhase)) {
+        // Make sure the room being moved to is a secret passage room
+        if (this.isSecretPassageRoom(moveTo)) {
+          // Move the player to the room and change the phase to suggest
+          this.movePlayerTo(this.turnPlayer, moveTo);
+          this.turnPhase = this.phases.SUGGEST;
         }
       }
     },
@@ -378,17 +397,17 @@ export default {
       }
     },
     turnPlayer (player) {
+      this.addMessage(`It is ${this.suspects[player]}'s turn`);
       if (this.isValidRoom(this.turnPlayerPosition) && this.turnPlayerLastPosition !== this.turnPlayerPosition) {
         this.turnPhase = this.phases.ROLL_OR_SUGGEST;
       } else {
         this.turnPhase = this.phases.ROLL;
       }
-      this.addMessage(`It is ${this.suspects[player]}'s turn`)
     },
     playerSelections: {
       handler (selected) {
         if (this.selectingPlayers) {
-          Object.keys(this.playerCoordinates).forEach(player => this.playerCoordinates[player] = selected[player] !== 'disabled' ? startingPositions[player] : null);
+          Object.keys(this.playerCoordinates).forEach(player => this.playerCoordinates[player] = selected[player] !== playerTypes.DISABLED ? startingPositions[player] : null);
         }
       },
       deep: true
@@ -397,6 +416,23 @@ export default {
       if (!isSelecting) {
         let deck = shuffle(this.getRemainingDeckAfterPickingEnvelopeCards());
         this.dealCardsToPlayers(deck);
+      }
+    },
+    turnPhase (phase) {
+      if (this.isRollPhase(phase)) {
+        let canSuggest = this.isSuggestionPhase(this.turnPhase);
+        let canPassage = this.isSecretPassageRoom(this.turnPlayerPosition);
+        let msg = 'Roll the die';
+        if (canSuggest && canPassage) {
+          msg += ', make a suggestion, or take the secret passage';
+        } else if (canSuggest) {
+          msg += ', or make a suggestion';
+        } else if (canPassage) {
+          msg += ', or take the secret passage';
+        }
+        this.addMessage(msg);
+      } else if (phase === this.phases.SUGGEST) {
+        this.addMessage('Make a suggestion');
       }
     }
   },
