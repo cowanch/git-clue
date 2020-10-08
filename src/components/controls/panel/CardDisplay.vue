@@ -1,5 +1,5 @@
 <template>
-  <div class="css-player-cards">
+  <div :class="{ 'css-player-cards-grid': gridView, 'css-player-cards': !gridView }">
     <card v-for="(card) in cards"
           :key="card"
           class="css-card"
@@ -11,10 +11,13 @@
 </template>
 
 <style scoped>
-.css-player-cards {
+.css-player-cards-grid {
   display: grid;
   grid-template-columns: auto auto;
   grid-template-rows: max-content;
+}
+.css-player-cards {
+  display: flex;
 }
 .css-card {
   margin: 10px 10px;
@@ -31,7 +34,8 @@ export default {
   name: 'CardDisplay',
   props: {
     cards: Array,
-    selection: Boolean
+    selection: Boolean,
+    gridView: Boolean
   },
   data () {
     return {

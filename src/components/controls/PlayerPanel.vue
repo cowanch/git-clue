@@ -23,7 +23,8 @@
     <div class="css-notepad-and-cards"
          v-show="isTabOpen('notepad-cards')">
       <notepad class="css-panel"/>
-      <card-display :cards="cards"/>
+      <card-display :cards="cards"
+                    :gridView="true"/>
     </div>
     <textarea readonly
               :value="messagesString"/>
