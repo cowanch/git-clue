@@ -2,7 +2,7 @@
   <div class="css-game-panel">
     <die v-if="showDie"
          :value="dieValue"/>
-    <div>
+    <div v-if="!optionsShown">
       <button v-if="showDie"
               @click="rollDie"
               :disabled="rollDisabled">
@@ -16,12 +16,12 @@
               @click="() => $emit('end-turn')">
         End Turn
       </button>
-      <button v-if="showEndTurn"
+      <button v-if="showAccusationPrompt"
               @click="showAccusationOptions=true">
         Make Accusation
       </button>
     </div>
-    <div v-if="showSuggestionOptions">
+    <div v-else-if="showSuggestionOptions">
       <clue-options v-model="suggestion"
                     :room="playerRoom"/>
       <button @click="makeSuggestion"
@@ -29,7 +29,7 @@
         Suggest
       </button>
     </div>
-    <div v-if="showAccusationOptions">
+    <div v-else-if="showAccusationOptions">
       <clue-options v-model="accusation"/>
       <button @click="makeAccusation"
               :disabled="!accusationReady">
@@ -97,16 +97,16 @@ export default {
       return !this.isRollPhase(this.turnPhase) || this.isDieRolling;
     },
     showDie () {
-      return this.isRollPhase(this.turnPhase) || this.turnPhase === this.phases.MOVE;
-    },
-    showSuggestions () {
-      return this.isSuggestionPhase(this.turnPhase);
+      return (this.isRollPhase(this.turnPhase) || this.turnPhase === this.phases.MOVE) && !this.optionsShown;
     },
     showSuggestionPrompt () {
-      return this.showSuggestions && !this.showSuggestionOptions;
+      return this.isSuggestionPhase(this.turnPhase);
     },
     suggestionReady () {
       return this.suggestion.suspect && this.suggestion.weapon && this.playerRoom;
+    },
+    showAccusationPrompt () {
+      return !this.rollDisabled || this.showSuggestionPrompt || this.showEndTurn;
     },
     accusationReady () {
       return this.accusation.suspect && this.accusation.weapon && this.accusation.room;
@@ -115,7 +115,10 @@ export default {
       return this.isValidRoom(this.playerPosition) ? this.playerPosition : '';
     },
     showEndTurn () {
-      return this.turnPhase === this.phases.END && !this.showAccusationOptions;
+      return this.turnPhase === this.phases.END;
+    },
+    optionsShown () {
+      return this.showSuggestionOptions || this.showAccusationOptions;
     }
   },
   methods: {
