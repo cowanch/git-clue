@@ -3,22 +3,28 @@
     <die v-if="showDie"
          :value="dieValue"/>
     <div v-if="!optionsShown">
-      <button v-if="showDie"
-              @click="rollDie"
-              :disabled="rollDisabled">
-        Roll Die
-      </button>
-      <button v-if="showSuggestionPrompt"
-              @click="showSuggestionOptions=true">
-        Make Suggestion
-      </button>
-      <button v-if="showEndTurn"
-              @click="() => $emit('end-turn')">
-        End Turn
-      </button>
-      <button v-if="showAccusationPrompt"
-              @click="showAccusationOptions=true">
-        Make Accusation
+      <template v-if="isHumanTurn">
+        <button v-if="showDie"
+                @click="rollDie"
+                :disabled="rollDisabled">
+          Roll Die
+        </button>
+        <button v-if="showSuggestionPrompt"
+                @click="showSuggestionOptions=true">
+          Make Suggestion
+        </button>
+        <button v-if="showEndTurn"
+                @click="() => $emit('end-turn')">
+          End Turn
+        </button>
+        <button v-if="showAccusationPrompt"
+                @click="showAccusationOptions=true">
+          Make Accusation
+        </button>
+      </template>
+      <button v-else
+              @click="cpuNext">
+        Next
       </button>
     </div>
     <div v-else-if="showSuggestionOptions">
@@ -74,7 +80,8 @@ export default {
     turnPhase: String,
     playerPosition: [String, Object],
     cardSelection: Array,
-    gameOver: Boolean
+    gameOver: Boolean,
+    isHumanTurn: Boolean
   },
   data () {
     return {
@@ -157,6 +164,9 @@ export default {
     },
     disprove (card) {
       this.$emit('disprove', card);
+    },
+    cpuNext () {
+      
     }
   },
   watch: {

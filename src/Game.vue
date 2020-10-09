@@ -19,6 +19,8 @@
                     :messages="messages"
                     :game-over="playerGameOver[this.turnPlayer]"
                     :player-won="hasPlayerWon"
+                    :is-human-turn="isHumanPlayer(this.turnPlayer)"
+                    :cpu-action="cpuAction"
                     @die-rolled="rollPhase"
                     @suggest="suggestPhase"
                     @accuse="accusePhase"
@@ -60,6 +62,8 @@ import shuffle from '@/utils/shuffle';
 import rooms from '@/mixins/rooms.mixin';
 import deckUtil from '@/mixins/deck.mixin';
 import turnPhases from '@/mixins/turnPhases.mixin';
+// Computer Player AI
+import CpuEasy from '@/cpu/CpuEasy';
 
 export default {
   name: 'Game',
@@ -79,7 +83,10 @@ export default {
       envelope: {},
       turnPhase: null,
       messages: [],
-      cardSelection: []
+      cardSelection: [],
+      cpuAction: '',
+      cpuPlayers: {},
+      availableMovesOverride: {}
     };
   },
   computed: {
@@ -106,6 +113,9 @@ export default {
       return Object.keys(this.playerSelections).find(key => this.isHumanPlayer(key));
     },
     availableMoves () {
+      if (Object.keys(this.availableMovesOverride).length > 0) {
+        return this.availableMovesOverride;
+      }
       let availableMoves = {};
       if (this.dieRoll > 0) {
         availableMoves = this.findAvailableMoves(this.turnPlayerPosition, this.dieRoll);
@@ -140,6 +150,36 @@ export default {
         }
       }
       return map;
+    },
+    gridCenter () {
+      let maxX = 0;
+      let maxY = 0;
+      Object.keys(this.gridMap).forEach(x => {
+        if (parseInt(x) > maxX) {
+          maxX = parseInt(x);
+        }
+        Object.keys(this.gridMap[x]).forEach(y => {
+          if (parseInt(y) > maxY) {
+            maxY = parseInt(y);
+          }
+        });
+      });
+      return { x: Math.floor(maxX/2), y: Math.floor(maxY/2) };
+    },
+    doorSpaces () {
+      let doorSpaces = {};
+      Object.keys(this.gridMap).forEach(x => {
+        Object.keys(this.gridMap[x]).forEach(y => {
+          let room = this.gridMap[x][y].room;
+          if (this.isValidRoom(room)) {
+            if (!doorSpaces.hasOwnProperty(room)) {
+              doorSpaces[room] = [];
+            }
+            doorSpaces[room].push({x:parseInt(x),y:parseInt(y)});
+          }
+        });
+      });
+      return doorSpaces;
     }
   },
   created () {
@@ -158,7 +198,14 @@ export default {
       roomKeys.splice(rand, 1);
     });
     this.addMessage('Welcome to Clue!');
-    this.currentTurn = 0;
+    this.currentTurn = -1;
+
+    this.playerSelections.scarlet = playerTypes.CPU_EASY;
+    this.playerSelections.mustard = playerTypes.CPU_EASY;
+    this.playerSelections.white = playerTypes.CPU_EASY;
+    this.playerSelections.green = playerTypes.CPU_EASY;
+    this.playerSelections.peacock = playerTypes.CPU_EASY;
+    this.playerSelections.plum = playerTypes.CPU_EASY;
   },
   methods: {
     findAvailableMoves (start, moves) {
@@ -219,6 +266,155 @@ export default {
         newPath.push(position);
         this.addNextMove(position, newPath, remaining-1, availableMoves);
       }
+    },
+    findShortestPathToRoom (room, start) {
+      return this.findNextSpaceToTarget(room, start, []);
+    },
+    findDistanceBetween (space1, space2) {
+      return Math.sqrt(Math.pow(space1.x - space2.x, 2) + Math.pow(space1.y - space2.y, 2));
+    },
+    findClosestDoorSpace (room, position) {
+      let lowest = 0;
+      let closestSpace = null;
+      this.doorSpaces[room].forEach(space => {
+        let distance = this.findDistanceBetween(space, position);
+        if (!closestSpace || distance < lowest) {
+          closestSpace = space;
+          lowest = distance;
+        }
+      });
+      return closestSpace;
+    },
+    findNextSpaceToTarget (room, position, path) {
+      // Find the current closest door
+      let targetSpace = this.findClosestDoorSpace(room, position);
+      if (targetSpace.x === position.x && targetSpace.y === position.y) {
+        return path;
+      } else {
+        let { x, y } = position;
+        let neighbours = [];
+        let upPosition = { x: x, y: y-1 };
+        if (this.isValidPosition(upPosition, path)) {
+          neighbours.push(upPosition);
+        }
+        let downPosition = { x: x, y: y+1 };
+        if (this.isValidPosition(downPosition, path)) {
+          neighbours.push(downPosition);
+        }
+        let leftPosition = { x: x-1, y: y };
+        if (position.x === 14 && position.y === 15) {
+          let x = 0;
+          x = 14;
+          console.log(x);
+          console.log(this.isValidPosition(leftPosition, path));
+        }
+        if (this.isValidPosition(leftPosition, path)) {
+          neighbours.push(leftPosition);
+        }
+        let rightPosition = {x: x+1, y: y};
+        if (this.isValidPosition(rightPosition, path)) {
+          neighbours.push(rightPosition);
+        }
+        let lowest = 0;
+        let nextSpace = null;
+        let currentDistance = this.findDistanceBetween(position, targetSpace);
+        if (position.x === 14 && position.y === 15) {
+          console.log(`Current Space: ${position.x},${position.y}`);
+          console.log(`Current Distance: ${currentDistance}`);
+        }
+        neighbours.forEach(space => {
+          let nextTarget = null;
+          let distance = 0;
+          if (currentDistance > 9.5) {
+            if (position.x === 14 && position.y === 14) {
+              console.log(`Choosing a midpoint target: ${currentDistance}`);
+            }
+            nextTarget = {
+              x: (this.gridCenter.x + targetSpace.x) / 2,
+              y: (this.gridCenter.y + targetSpace.y) / 2
+            };
+          } else {
+            nextTarget = this.findClosestDoorSpace(room, space);
+          }
+          distance = this.findDistanceBetween(space, nextTarget);
+          if (position.x === 14 && position.y === 15) {
+            console.log('NEW SPACE');
+            console.log(space);
+            console.log(nextTarget);
+            console.log(distance);
+            console.log(this.getClosestNeighbour(nextTarget, space, path));
+          }
+          if (!nextSpace || distance < lowest) {
+            nextSpace = space;
+            lowest = distance;
+          } else if (distance === lowest) {
+            if (position.x === 14 && position.y === 15) {
+              console.log('TIEBREAKER REQUIRED');
+            }
+          }
+        });
+        if (!nextSpace) {
+          return path;
+        }
+        path.push(nextSpace);
+        return this.findNextSpaceToTarget(room, nextSpace, path);
+      }
+    },
+    pathTiebreaker (space1, space2, room, path) {
+      let targetSpace1 = this.findClosestDoorSpace(room, space1);
+      let nextSpace1 = this.getClosestNeighbour(targetSpace1, space1, path);
+      let distance1 = this.findDistanceBetween(nextSpace1, targetSpace1);
+
+      let targetSpace2 = this.findClosestDoorSpace(room, space2);
+      let nextSpace2 = this.getClosestNeighbour(targetSpace2, space2, path);
+      let distance2 = this.findDistanceBetween(nextSpace2, targetSpace2);
+
+      if (distance1 < distance2) {
+        return space1
+      } else if (distance2 <)
+    },
+    getClosestNeighbour (target, position, path) {
+      let { x, y } = position;
+      let neighbours = [];
+      let upPosition = { x: x, y: y-1 };
+      if (this.isValidPosition(upPosition, path)) {
+        neighbours.push(upPosition);
+      }
+      let downPosition = { x: x, y: y+1 };
+      if (this.isValidPosition(downPosition, path)) {
+        neighbours.push(downPosition);
+      }
+      let leftPosition = { x: x-1, y: y };
+      if (this.isValidPosition(leftPosition, path)) {
+        neighbours.push(leftPosition);
+      }
+      let rightPosition = {x: x+1, y: y};
+      if (this.isValidPosition(rightPosition, path)) {
+        neighbours.push(rightPosition);
+      }
+      let lowest = 0;
+      let closestNeighbour = null;
+      neighbours.forEach(space => {
+        let distance = this.findDistanceBetween(space, target);
+        if (!closestNeighbour || distance < lowest) {
+          lowest = distance;
+          closestNeighbour = space;
+        }
+      });
+      return closestNeighbour;
+    },
+    getGridMapRow (y) {
+      let row = [];
+      Object.keys(this.gridMap).forEach(col => {
+        if (Object.keys(this.gridMap[col]).includes(`${y}`)) {
+          row.push(parseInt(col));
+        }
+      });
+      row.sort((val1, val2) => val1 > val2);
+      return row;
+    },
+    isValidPosition (position, path) {
+      return this.isPositionOnBoard(position) && !this.isPositionOnPath(position, path) && !this.isPlayerOnPosition(position);
     },
     isPositionOnBoard (position) {
       let { x, y } = position;
@@ -430,6 +626,27 @@ export default {
         } else {
           this.turnPhase = this.phases.ROLL;
         }
+        if (this.isCpuPlayer(player)) {
+          // let paths = {};
+          // Object.keys(this.rooms).forEach(room => paths[room] = this.findShortestPathToRoom(room, this.cpuPlayers[player].coordinates));
+          // console.log(paths);
+          // let path = this.findShortestPathToRoom('lounge', this.cpuPlayers[player].coordinates);
+          // let path = this.findShortestPathToRoom('hall', this.cpuPlayers[player].coordinates);
+          // let path = this.findShortestPathToRoom('study', this.cpuPlayers[player].coordinates);
+          let path = this.findShortestPathToRoom('library', this.cpuPlayers[player].coordinates);
+          // let path = this.findShortestPathToRoom('billiard', this.cpuPlayers[player].coordinates);
+          // let path = this.findShortestPathToRoom('conservatory', this.cpuPlayers[player].coordinates);
+          // let path = this.findShortestPathToRoom('ballroom', this.cpuPlayers[player].coordinates);
+          // let path = this.findShortestPathToRoom('kitchen', this.cpuPlayers[player].coordinates);
+          // let path = this.findShortestPathToRoom('dining', this.cpuPlayers[player].coordinates);
+          path.forEach(space => {
+            if (!this.availableMovesOverride.hasOwnProperty(space.x)) {
+              this.availableMovesOverride[space.x] = {};
+            }
+            this.availableMovesOverride[space.x][space.y] = true;
+          });
+          // console.log(path);
+        }
       } else {
         this.endTurn();
       }
@@ -446,6 +663,12 @@ export default {
       if (!isSelecting) {
         let deck = shuffle(this.getRemainingDeckAfterPickingEnvelopeCards());
         this.dealCardsToPlayers(deck);
+        this.turnOrder.forEach(player => {
+          if (this.isCpuPlayer(player)) {
+            this.cpuPlayers[player] = new CpuEasy(this.playerCards[player], this.playerCoordinates[player], this.turnOrder);
+          }
+        });
+        this.currentTurn = 2;
       }
     },
     turnPhase (phase) {
