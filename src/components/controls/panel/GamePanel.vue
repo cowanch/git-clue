@@ -73,7 +73,8 @@ export default {
   props: {
     turnPhase: String,
     playerPosition: [String, Object],
-    cardSelection: Array
+    cardSelection: Array,
+    gameOver: Boolean
   },
   data () {
     return {
@@ -106,7 +107,7 @@ export default {
       return this.suggestion.suspect && this.suggestion.weapon && this.playerRoom;
     },
     showAccusationPrompt () {
-      return !this.rollDisabled || this.showSuggestionPrompt || this.showEndTurn;
+      return (!this.rollDisabled || this.showSuggestionPrompt || this.showEndTurn) && !this.gameOver;
     },
     accusationReady () {
       return this.accusation.suspect && this.accusation.weapon && this.accusation.room;
@@ -162,6 +163,10 @@ export default {
     turnPhase (phase) {
       if (this.isRollPhase(phase)) {
         this.dieValue = 0;
+        this.showAccusationOptions = false;
+        this.accusation.suspect = '';
+        this.accusation.weapon = '';
+        this.accusation.room = '';
       }
       if (!this.isSuggestionPhase(phase)) {
         this.showSuggestionOptions = false;
@@ -171,6 +176,12 @@ export default {
     },
     showSuggestionOptions (show) {
       this.$emit('show-suggest-options', show);
+    },
+    gameOver (isOver) {
+      if (isOver) {
+        this.showSuggestionOptions = false;
+        this.showAccusationOptions = false;
+      }
     }
   },
   components: {

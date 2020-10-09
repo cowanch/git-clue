@@ -10,16 +10,19 @@
         Notepad / Cards
       </button>
     </div>
-    <game-panel v-show="isTabOpen('game')"
+    <game-panel v-if="!playerWon"
+                v-show="isTabOpen('game')"
                 class="css-panel"
                 :turn-phase="turnPhase"
                 :player-position="playerPosition"
                 :card-selection="cardSelection"
+                :game-over="gameOver"
                 @disprove="card => $emit('disprove', card)"
                 @die-rolled="roll => $emit('die-rolled', roll)"
                 @end-turn="() => $emit('end-turn')"
                 @show-suggest-options="show => $emit('show-suggest-options', show)"
-                @suggest="suggestion => $emit('suggest', suggestion)"/>
+                @suggest="suggestion => $emit('suggest', suggestion)"
+                @accuse="accusation => $emit('accuse', accusation)"/>
     <div class="css-notepad-and-cards"
          v-show="isTabOpen('notepad-cards')">
       <notepad class="css-panel"/>
@@ -76,7 +79,9 @@ export default {
     cardSelection: Array,
     turnPhase: String,
     playerPosition: [String, Object],
-    messages: Array
+    messages: Array,
+    gameOver: Boolean,
+    playerWon: Boolean
   },
   data () {
     return {
