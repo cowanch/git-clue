@@ -2,7 +2,7 @@
   <div class="css-game-panel">
     <die v-if="showDie"
          :value="dieValue"/>
-    <div>
+    <div v-if="!optionsShown">
       <button v-if="showDie"
               @click="rollDie"
               :disabled="rollDisabled">
@@ -16,13 +16,27 @@
               @click="() => $emit('end-turn')">
         End Turn
       </button>
+      <button v-if="showAccusationPrompt"
+              @click="showAccusationOptions=true">
+        Make Accusation
+      </button>
     </div>
-    <div v-if="showSuggestionOptions">
+    <div v-else-if="showSuggestionOptions">
       <clue-options v-model="suggestion"
                     :room="playerRoom"/>
       <button @click="makeSuggestion"
               :disabled="!suggestionReady">
         Suggest
+      </button>
+    </div>
+    <div v-else-if="showAccusationOptions">
+      <clue-options v-model="accusation"/>
+      <button @click="makeAccusation"
+              :disabled="!accusationReady">
+        Accuse
+      </button>
+      <button @click="showAccusationOptions=false">
+        Cancel
       </button>
     </div>
     <card-display :cards="cardSelection"
@@ -59,15 +73,22 @@ export default {
   props: {
     turnPhase: String,
     playerPosition: [String, Object],
-    cardSelection: Array
+    cardSelection: Array,
+    gameOver: Boolean
   },
   data () {
     return {
       dieValue: 0,
       showSuggestionOptions: false,
+      showAccusationOptions: false,
       suggestion: {
         suspect: '',
         weapon: ''
+      },
+      accusation: {
+        suspect: '',
+        weapon: '',
+        room: ''
       },
       isDieRolling: false
     };
@@ -77,22 +98,28 @@ export default {
       return !this.isRollPhase(this.turnPhase) || this.isDieRolling;
     },
     showDie () {
-      return this.isRollPhase(this.turnPhase) || this.turnPhase === this.phases.MOVE;
-    },
-    showSuggestions () {
-      return this.isSuggestionPhase(this.turnPhase);
+      return (this.isRollPhase(this.turnPhase) || this.turnPhase === this.phases.MOVE) && !this.optionsShown;
     },
     showSuggestionPrompt () {
-      return this.showSuggestions && !this.showSuggestionOptions;
+      return this.isSuggestionPhase(this.turnPhase);
     },
     suggestionReady () {
       return this.suggestion.suspect && this.suggestion.weapon && this.playerRoom;
+    },
+    showAccusationPrompt () {
+      return (!this.rollDisabled || this.showSuggestionPrompt || this.showEndTurn) && !this.gameOver;
+    },
+    accusationReady () {
+      return this.accusation.suspect && this.accusation.weapon && this.accusation.room;
     },
     playerRoom () {
       return this.isValidRoom(this.playerPosition) ? this.playerPosition : '';
     },
     showEndTurn () {
       return this.turnPhase === this.phases.END;
+    },
+    optionsShown () {
+      return this.showSuggestionOptions || this.showAccusationOptions;
     }
   },
   methods: {
@@ -123,6 +150,11 @@ export default {
         });
       }
     },
+    makeAccusation () {
+      if (this.accusationReady) {
+        this.$emit('accuse', this.accusation);
+      }
+    },
     disprove (card) {
       this.$emit('disprove', card);
     }
@@ -131,6 +163,10 @@ export default {
     turnPhase (phase) {
       if (this.isRollPhase(phase)) {
         this.dieValue = 0;
+        this.showAccusationOptions = false;
+        this.accusation.suspect = '';
+        this.accusation.weapon = '';
+        this.accusation.room = '';
       }
       if (!this.isSuggestionPhase(phase)) {
         this.showSuggestionOptions = false;
@@ -140,6 +176,12 @@ export default {
     },
     showSuggestionOptions (show) {
       this.$emit('show-suggest-options', show);
+    },
+    gameOver (isOver) {
+      if (isOver) {
+        this.showSuggestionOptions = false;
+        this.showAccusationOptions = false;
+      }
     }
   },
   components: {

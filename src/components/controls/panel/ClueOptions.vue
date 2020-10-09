@@ -38,7 +38,7 @@
         {{name}}
       </option>
     </select>
-    <p v-else>{{rooms[room]}}</p>
+    <span v-else>{{rooms[room]}}</span>
   </div>
 </template>
 
@@ -48,7 +48,7 @@
   grid-template-columns: auto auto;
   width: 30%;
 }
-select,label,p {
+select,label,span {
   margin-top: 10px;
 }
 </style>

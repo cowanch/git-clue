@@ -17,8 +17,11 @@
                     :turn-phase="turnPhase"
                     :player-position="this.turnPlayerPosition"
                     :messages="messages"
+                    :game-over="playerGameOver[this.turnPlayer]"
+                    :player-won="hasPlayerWon"
                     @die-rolled="rollPhase"
                     @suggest="suggestPhase"
+                    @accuse="accusePhase"
                     @end-turn="endTurn"
                     @show-suggest-options="suggestOptionsShown"
                     @disprove="disprovePhase"/>
@@ -67,6 +70,8 @@ export default {
       lastTurnCoordinates: {},
       playerSelections: {},
       playerCards: {},
+      playerGameOver: {},
+      hasPlayerWon: false,
       weaponCoordinates: {},
       currentTurn: -1,
       dieRoll: 0,
@@ -144,6 +149,7 @@ export default {
       this.$set(this.lastTurnCoordinates, player, null);
       this.$set(this.playerSelections, player, playerTypes.DISABLED);
       this.$set(this.playerCards, player, []);
+      this.$set(this.playerGameOver, player, false);
     });
     let roomKeys = Object.keys(this.rooms);
     Object.keys(this.weapons).forEach(weapon => {
@@ -324,6 +330,19 @@ export default {
         this.turnPhase = this.phases.END;
       }
     },
+    accusePhase (accusation) {
+      // Accusation made, check the envelope to see if it's correct
+      this.addAccusationMessage(accusation);
+      let isCorrect = Object.keys(accusation).every(key => accusation[key] === this.envelope[key]);
+      if (isCorrect) {
+        this.addMessage(`Correct! ${this.suspects[this.turnPlayer]} wins!`);
+        this.hasPlayerWon = true;
+      } else {
+        this.addMessage(`Incorrect - ${this.suspects[this.turnPlayer]} must sit out`);
+        this.playerGameOver[this.turnPlayer] = true;
+        this.turnPhase = this.phases.END;
+      }
+    },
     handleDisprovingCards (player, cards) {
       if (this.isHumanPlayer(player)) {
         this.turnPhase = this.phases.DISPROVE;
@@ -381,6 +400,13 @@ export default {
       let roomText = this.rooms[room];
       this.addMessage(`${this.suspects[this.turnPlayer]} suggests ${suspectText} with the ${weaponText} in the ${roomText}`);
     },
+    addAccusationMessage (accusation) {
+      let {suspect, weapon, room} = accusation;
+      let suspectText = this.suspects[suspect];
+      let weaponText = this.weapons[weapon];
+      let roomText = this.rooms[room];
+      this.addMessage(`${this.suspects[this.turnPlayer]} accuses ${suspectText} of committing the crime in the ${roomText} with the ${weaponText}`);
+    },
     addMessage (message) {
       this.messages.push(message);
     },
@@ -397,11 +423,15 @@ export default {
       }
     },
     turnPlayer (player) {
-      this.addMessage(`It is ${this.suspects[player]}'s turn`);
-      if (this.isValidRoom(this.turnPlayerPosition) && this.turnPlayerLastPosition !== this.turnPlayerPosition) {
-        this.turnPhase = this.phases.ROLL_OR_SUGGEST;
+      if (!this.playerGameOver[player]) {
+        this.addMessage(`It is ${this.suspects[player]}'s turn`);
+        if (this.isValidRoom(this.turnPlayerPosition) && this.turnPlayerLastPosition !== this.turnPlayerPosition) {
+          this.turnPhase = this.phases.ROLL_OR_SUGGEST;
+        } else {
+          this.turnPhase = this.phases.ROLL;
+        }
       } else {
-        this.turnPhase = this.phases.ROLL;
+        this.endTurn();
       }
     },
     playerSelections: {
