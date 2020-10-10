@@ -401,20 +401,22 @@ export default {
       }
       console.log('nextSpaces');
       console.log(nextSpaces);
-      if (nextSpaces.length > 0) {
-        let rand = Math.floor(Math.random() * nextSpaces.length);
-        console.log(nextSpaces);
-        return nextSpaces[rand];
-      } else {
+      if (nextSpaces.length === 0) {
         // Find the neighbours that have not been looked at yet
         console.log('Have to get the neighbours');
         let neighbours = this.getSpaceNeighbours(start);
         console.log(neighbours);
-        let nextSpaces = neighbours.filter(space => !this.coordinatesEqual(space, nextX) && !this.coordinatesEqual(space, nextY) && this.isValidPosition(space, path));
+        nextSpaces = neighbours.filter(space => !this.coordinatesEqual(space, nextX) && !this.coordinatesEqual(space, nextY) && this.isValidPosition(space, path));
         console.log('Found the last neighbour');
+      }
+      if (nextSpaces.length > 0) {
         let rand = Math.floor(Math.random() * nextSpaces.length);
         return nextSpaces[rand];
       }
+
+      // If we still can't find one, change the target
+      // Start at the old target and try to get to the start
+      return this.findSpaceInUnbrokenPath(this.getNewTarget(target, start), start, path);
     },
     canTraverseX (target, start) {
       if (target.x === start.x) {
@@ -441,6 +443,31 @@ export default {
         }
       }
       return true;
+    },
+    getNewTarget (target, start) {
+      let { x, y } = target;
+      let directionX = start.x > target.x ? 1 : -1;
+      let directionY = start.y > target.y ? 1 : -1;
+      let newTarget = { x: target.x, y: target.y };
+      while (x !== start.x) {
+        x += directionX;
+        let pathX = { x: x, y: newTarget.y };
+        if (!this.isPositionOnBoard(pathX)) {
+          break;
+        } else {
+          newTarget = pathX;
+        }
+      }
+      while (y !== start.y) {
+        y += directionY;
+        let pathY = { x: newTarget.x, y: y };
+        if (!this.isPositionOnBoard(pathY)) {
+          break;
+        } else {
+          newTarget = pathY;
+        }
+      }
+      return newTarget;
     },
     getSpaceNeighbours (position) {
       let { x, y } = position;
@@ -711,7 +738,7 @@ export default {
           // let paths = {};
           // Object.keys(this.rooms).forEach(room => paths[room] = this.findShortestPathToRoom(room, this.cpuPlayers[player].coordinates));
           // console.log(paths);
-          // let path = this.findShortestPathToRoom('lounge', this.cpuPlayers[player].coordinates);
+          let path = this.findShortestPathToRoom('lounge', this.cpuPlayers[player].coordinates);
           // let path = this.findShortestPathToRoom('hall', this.cpuPlayers[player].coordinates);
           // let path = this.findShortestPathToRoom('study', this.cpuPlayers[player].coordinates);
           // let path = this.findShortestPathToRoom('library', this.cpuPlayers[player].coordinates);
@@ -719,7 +746,7 @@ export default {
           // let path = this.findShortestPathToRoom('conservatory', this.cpuPlayers[player].coordinates);
           // let path = this.findShortestPathToRoom('ballroom', this.cpuPlayers[player].coordinates);
           // let path = this.findShortestPathToRoom('kitchen', this.cpuPlayers[player].coordinates);
-          let path = this.findShortestPathToRoom('dining', this.cpuPlayers[player].coordinates);
+          // let path = this.findShortestPathToRoom('dining', this.cpuPlayers[player].coordinates);
           path.forEach(space => {
             if (!this.availableMovesOverride.hasOwnProperty(space.x)) {
               this.availableMovesOverride[space.x] = {};
