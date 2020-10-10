@@ -317,23 +317,21 @@ export default {
         // if (this.isValidPosition(rightPosition, path)) {
         //   neighbours.push(rightPosition);
         // }
+        let neighbours = this.getSpaceNeighbours(position);
         // let lowest = 0;
         // let nextSpace = null;
-        // neighbours.forEach(space => {
-        //   let nextTarget = this.findClosestDoorSpace(room, space);
-        //   let npmSpaces = this.findSpacesBetween(space, nextTarget);
-        //   if (!nextSpace || npmSpaces < lowest) {
-        //     nextSpace = space;
-        //     lowest = npmSpaces;
-        //   } else if (npmSpaces === lowest) {
-        //     nextSpace = this.findSpaceInUnbrokenPath(nextTarget, position);
-        //   }
-        // });
+        neighbours.forEach(space => {
+          let distance = this.findDistanceBetween(space, targetSpace);
+          let npmSpaces = this.findSpacesBetween(space, nextTarget);
+          if (!nextSpace || npmSpaces < lowest) {
+            nextSpace = space;
+            lowest = npmSpaces;
+          } else if (npmSpaces === lowest) {
+            nextSpace = this.findSpaceInUnbrokenPath(nextTarget, position);
+          }
+        });
         let nextSpace = this.findSpaceInUnbrokenPath(targetSpace, position, path);
-        console.log('NEXT SPACE');
-        console.log(nextSpace);
         if (!nextSpace) {
-          console.log(path);
           return path;
         }
         path.push(nextSpace);
@@ -342,11 +340,7 @@ export default {
     },
     findSpaceInUnbrokenPath (target, start, path) {
       // Make sure these aren't the same space
-      console.log('FIND SPACE IN PATH');
-      console.log(start);
-      console.log(target);
       if (start.x === target.x && start.y === target.y) {
-        console.log('return target');
         return target;
       }
 
@@ -366,10 +360,8 @@ export default {
       let isNextYValid = this.isValidPosition(nextY, path);
 
       if (start.x === nextX.x && isNextYValid) {
-        console.log('return nextY');
         return nextY;
       } else if (start.y === nextY.y && isNextXValid) {
-        console.log('return nextX');
         return nextX;
       }
       if (isNextXValid && !isNextYValid) {
@@ -399,19 +391,16 @@ export default {
       if (yThenX) {
         nextSpaces.push(nextY);
       }
-      console.log('nextSpaces');
-      console.log(nextSpaces);
-      if (nextSpaces.length === 0) {
-        // Find the neighbours that have not been looked at yet
-        console.log('Have to get the neighbours');
-        let neighbours = this.getSpaceNeighbours(start);
-        console.log(neighbours);
-        nextSpaces = neighbours.filter(space => !this.coordinatesEqual(space, nextX) && !this.coordinatesEqual(space, nextY) && this.isValidPosition(space, path));
-        console.log('Found the last neighbour');
-      }
       if (nextSpaces.length > 0) {
         let rand = Math.floor(Math.random() * nextSpaces.length);
         return nextSpaces[rand];
+      } else {
+        // Find the neighbours that have not been looked at yet
+        let neighbours = this.getSpaceNeighbours(start);
+        nextSpaces = neighbours.filter(space => this.isValidPosition(space, path));
+        if (nextSpaces.length === 1) {
+          return nextSpaces[0];
+        }
       }
 
       // If we still can't find one, change the target
