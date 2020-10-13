@@ -11,6 +11,15 @@ export default {
         return obj1.x === obj2.x && obj1.y === obj2.y;
       }
       return false;
+    },
+    getMidpoint (point1, point2) {
+      if (this.isCoordinates(point1) && this.isCoordinates(point2)) {
+        return {
+          x: (point1.x + point2.x) / 2,
+          y: (point1.y + point2.y) / 2
+        };
+      }
+      return null;
     }
   }
 };

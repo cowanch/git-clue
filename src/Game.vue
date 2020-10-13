@@ -268,22 +268,67 @@ export default {
         this.addNextMove(position, newPath, remaining-1, availableMoves);
       }
     },
-    findShortestPathToRoom (room, start) {
-      return this.findNextSpaceToTarget(room, start, []);
+    // Start with a position and a target room
+    findShortestPathToRoom (start, room) {
+      return this.findNextSpaceToTarget(start, room, []);
     },
-    findDistanceBetween (space1, space2) {
-      return Math.sqrt(Math.pow(space1.x - space2.x, 2) + Math.pow(space1.y - space2.y, 2));
+    findNextSpaceToTarget (position, room, path) {
+      // Find the current closest door
+      console.log('==========NEXTSPACE=============');
+      console.log(position);
+      console.log(path);
+      console.log('==========NEXTSPACE=============');
+      path.push(position);
+      let targetSpace = this.findClosestDoorSpace(position, room);
+      // If the target space is the same as this position, we have reached the end of the path
+      if (this.coordinatesEqual(position, targetSpace)) {
+        console.log(path);
+        return path;
+      } else {
+        let nextSpace = this.findSpaceInUnbrokenPath(position, targetSpace, path);
+        if (!nextSpace) {
+          // Need to find a detour
+          let detour = this.findDetourSpace(position, targetSpace, path);
+          if (!detour) {
+            return path;
+          }
+          let neighbours = this.getSpaceNeighbours(position);
+          let lowest = 0;
+          neighbours.forEach(space => {
+            if (this.isValidPosition(space, path)) {
+              let distance = this.findDistanceBetween(space, detour);
+              if (!nextSpace || distance < lowest) {
+                nextSpace = space;
+                lowest = distance;
+              }
+            }
+          });
+        }
+        return this.findNextSpaceToTarget(nextSpace, room, path);
+        // let neighbours = this.getSpaceNeighbours(position);
+        // neighbours.forEach(space => {
+        //   let distance = this.findDistanceBetween(space, targetSpace);
+        //   let npmSpaces = this.findSpacesBetween(space, nextTarget);
+        //   if (!nextSpace || npmSpaces < lowest) {
+        //     nextSpace = space;
+        //     lowest = npmSpaces;
+        //   } else if (npmSpaces === lowest) {
+        //     nextSpace = this.findSpaceInUnbrokenPath(nextTarget, position);
+        //   }
+        // });
+        // let nextSpace = this.findSpaceInUnbrokenPath(targetSpace, position, path);
+        // if (!nextSpace) {
+        //   return path;
+        // }
+        // path.push(nextSpace);
+        // return this.findNextSpaceToTarget(room, nextSpace, path);
+      }
     },
-    findSpacesBetween (space1, space2) {
-      let hSpaces = Math.abs(space1.x - space2.x);
-      let vSpaces = Math.abs(space1.y - space2.y);
-      return hSpaces + vSpaces;
-    },
-    findClosestDoorSpace (room, position) {
+    findClosestDoorSpace (position, room) {
       let lowest = 0;
       let closestSpace = null;
       this.doorSpaces[room].forEach(space => {
-        let spaces = this.findSpacesBetween(space, position);
+        let spaces = this.findSpacesBetween(position, space);
         if (!closestSpace || spaces < lowest) {
           closestSpace = space;
           lowest = spaces;
@@ -291,100 +336,34 @@ export default {
       });
       return closestSpace;
     },
-    findNextSpaceToTarget (room, position, path) {
-      // Find the current closest door
-      console.log('POSITION');
-      console.log(position);
-      let targetSpace = this.findClosestDoorSpace(room, position);
-      if (targetSpace.x === position.x && targetSpace.y === position.y) {
-        return path;
-      } else {
-        // let { x, y } = position;
-        // let neighbours = [];
-        // let upPosition = { x: x, y: y-1 };
-        // if (this.isValidPosition(upPosition, path)) {
-        //   neighbours.push(upPosition);
-        // }
-        // let downPosition = { x: x, y: y+1 };
-        // if (this.isValidPosition(downPosition, path)) {
-        //   neighbours.push(downPosition);
-        // }
-        // let leftPosition = { x: x-1, y: y };
-        // if (this.isValidPosition(leftPosition, path)) {
-        //   neighbours.push(leftPosition);
-        // }
-        // let rightPosition = {x: x+1, y: y};
-        // if (this.isValidPosition(rightPosition, path)) {
-        //   neighbours.push(rightPosition);
-        // }
-        let neighbours = this.getSpaceNeighbours(position);
-        // let lowest = 0;
-        // let nextSpace = null;
-        neighbours.forEach(space => {
-          let distance = this.findDistanceBetween(space, targetSpace);
-          let npmSpaces = this.findSpacesBetween(space, nextTarget);
-          if (!nextSpace || npmSpaces < lowest) {
-            nextSpace = space;
-            lowest = npmSpaces;
-          } else if (npmSpaces === lowest) {
-            nextSpace = this.findSpaceInUnbrokenPath(nextTarget, position);
-          }
-        });
-        let nextSpace = this.findSpaceInUnbrokenPath(targetSpace, position, path);
-        if (!nextSpace) {
-          return path;
-        }
-        path.push(nextSpace);
-        return this.findNextSpaceToTarget(room, nextSpace, path);
-      }
-    },
-    findSpaceInUnbrokenPath (target, start, path) {
+    findSpaceInUnbrokenPath (start, target, path) {
       // Make sure these aren't the same space
-      if (start.x === target.x && start.y === target.y) {
+      if (this.coordinatesEqual(start, target)) {
         return target;
       }
 
-      let x = start.x;
-      let y = start.y;
-
+      let { x, y } = start;
       if (start.x !== target.x) {
         x += ((start.x < target.x) ? 1 : -1);
       }
       if (start.y !== target.y) {
         y += ((start.y < target.y) ? 1 : -1);
       }
-
       let nextX = { x: x, y: start.y };
       let nextY = { x: start.x, y: y };
-      let isNextXValid = this.isValidPosition(nextX, path);
-      let isNextYValid = this.isValidPosition(nextY, path);
-
-      if (start.x === nextX.x && isNextYValid) {
-        return nextY;
-      } else if (start.y === nextY.y && isNextXValid) {
-        return nextX;
-      }
-      if (isNextXValid && !isNextYValid) {
-        return nextX;
-      } else if (isNextYValid && !isNextXValid) {
-        return nextY;
-      }
 
       // Check if can traverse x then y
       let xThenY = false;
-      if (this.canTraverseX(target, start)) {
-        xThenY = this.canTraverseY(target, { x: target.x, y: start.y });
+      if (this.canTraverseX(start, target, path)) {
+        xThenY = this.canTraverseY({ x: target.x, y: start.y }, target, path);
       }
       // Check if can traverse y then x
       let yThenX = false;
-      if (this.canTraverseY(target, start)) {
-        yThenX = this.canTraverseX(target, { x: start.x, y: target.y });
+      if (this.canTraverseY(start, target, path)) {
+        yThenX = this.canTraverseX({ x: start.x, y: target.y }, target, path);
       }
 
-
-
       let nextSpaces = [];
-
       if (xThenY) {
         nextSpaces.push(nextX);
       }
@@ -394,40 +373,80 @@ export default {
       if (nextSpaces.length > 0) {
         let rand = Math.floor(Math.random() * nextSpaces.length);
         return nextSpaces[rand];
-      } else {
-        // Find the neighbours that have not been looked at yet
-        let neighbours = this.getSpaceNeighbours(start);
-        nextSpaces = neighbours.filter(space => this.isValidPosition(space, path));
-        if (nextSpaces.length === 1) {
-          return nextSpaces[0];
+      }
+      return null;
+    },
+    findDetourSpace (start, target, path) {
+      // Find the midpoint
+      let mid = this.getMidpoint(start, target);
+      let m1 = (start.y - target.y) / (start.x - target.x);
+      let m2 = -1 / m1;
+      let b2 = mid.y - (m2 * mid.x);
+      // With the perpendicular line, find the closest valid space
+      let x = Math.floor(mid.x);
+      for (let delta=1; delta<10; delta++) {
+        let detours = [];
+
+        let x1 = x + delta;
+        let detour1 = { x: x1, y: Math.floor((m2*(x1))+b2) };
+        if (this.isValidPosition(detour1, path)) {
+          detours.push(detour1);
+        }
+
+        let x2 = x - delta;
+        let detour2 = { x: x2, y: Math.floor((m2*(x2))+b2) };
+        if (this.isValidPosition(detour2, path)) {
+          detours.push(detour2);
+        }
+
+        if (detours.length > 0) {
+          let rand = Math.floor(Math.random() * detours.length);
+          return detours[rand];
         }
       }
-
-      // If we still can't find one, change the target
-      // Start at the old target and try to get to the start
-      return this.findSpaceInUnbrokenPath(this.getNewTarget(target, start), start, path);
+      return null;
     },
-    canTraverseX (target, start) {
+    findDistanceBetween (space1, space2) {
+      return Math.sqrt(Math.pow(space1.x - space2.x, 2) + Math.pow(space1.y - space2.y, 2));
+    },
+    findSpacesBetween (space1, space2) {
+      let hSpaces = Math.abs(space1.x - space2.x);
+      let vSpaces = Math.abs(space1.y - space2.y);
+      return hSpaces + vSpaces;
+    },
+    canTraverseX (start, target, path) {
+      // console.log(`traverseX: ${start.x},${start.y}`);
       if (target.x === start.x) {
         return true;
       }
       let direction = start.x < target.x ? 1 : -1;
-      for (let x=start.x; x!==target.x; x+=direction) {
+      // console.log(target.x);
+      console.log('==================');
+      for (let x=start.x+direction; x!==target.x; x+=direction) {
         let position = { x: x, y: start.y };
-        if (!this.isPositionOnBoard(position)) {
+        // console.log(x);
+
+        if (!this.isValidPosition(position, path)) {
+          // console.log('returned false');
+
+          console.log(position);
+          // console.log(this.isPositionOnPath(position, path));
+          console.log(path);
+
           return false;
         }
       }
+      console.log('==================');
       return true;
     },
-    canTraverseY (target, start) {
+    canTraverseY (start, target, path) {
       if (target.y === start.y) {
         return true;
       }
       let direction = start.y < target.y ? 1 : -1;
-      for (let y=start.y; y!==target.y; y+=direction) {
+      for (let y=start.y+direction; y!==target.y; y+=direction) {
         let position = { x: start.x, y: y };
-        if (!this.isPositionOnBoard(position)) {
+        if (!this.isValidPosition(position, path)) {
           return false;
         }
       }
@@ -513,7 +532,7 @@ export default {
     isPositionOnBoard (position) {
       if (this.isCoordinates(position)) {
         let { x, y } = position;
-        return this.gridMap.hasOwnProperty(x) && this.gridMap[x].hasOwnProperty(y);
+        return this.gridMap.hasOwnProperty(x) && this.gridMap[`${x}`].hasOwnProperty(y);
       }
       return false;
     },
@@ -524,7 +543,7 @@ export default {
       return null;
     },
     isPositionOnPath (position, path) {
-      return path.some(pathPosition => position.x === pathPosition.x && position.y === pathPosition.y);
+      return path.some(pathPosition => this.coordinatesEqual(position, pathPosition));
     },
     isRoomOnPath (room, path) {
       return path.some(pathRoom => room === pathRoom);
@@ -725,17 +744,17 @@ export default {
         }
         if (this.isCpuPlayer(player)) {
           // let paths = {};
-          // Object.keys(this.rooms).forEach(room => paths[room] = this.findShortestPathToRoom(room, this.cpuPlayers[player].coordinates));
+          // Object.keys(this.rooms).forEach(room => paths[room] = this.findShortestPathToRoom(this.cpuPlayers[player].coordinates, room));
           // console.log(paths);
-          let path = this.findShortestPathToRoom('lounge', this.cpuPlayers[player].coordinates);
-          // let path = this.findShortestPathToRoom('hall', this.cpuPlayers[player].coordinates);
-          // let path = this.findShortestPathToRoom('study', this.cpuPlayers[player].coordinates);
-          // let path = this.findShortestPathToRoom('library', this.cpuPlayers[player].coordinates);
-          // let path = this.findShortestPathToRoom('billiard', this.cpuPlayers[player].coordinates);
-          // let path = this.findShortestPathToRoom('conservatory', this.cpuPlayers[player].coordinates);
-          // let path = this.findShortestPathToRoom('ballroom', this.cpuPlayers[player].coordinates);
-          // let path = this.findShortestPathToRoom('kitchen', this.cpuPlayers[player].coordinates);
-          // let path = this.findShortestPathToRoom('dining', this.cpuPlayers[player].coordinates);
+          let path = this.findShortestPathToRoom(this.cpuPlayers[player].coordinates, 'lounge');
+          // let path = this.findShortestPathToRoom(this.cpuPlayers[player].coordinates, 'hall');
+          // let path = this.findShortestPathToRoom(this.cpuPlayers[player].coordinates, 'study');
+          // let path = this.findShortestPathToRoom(this.cpuPlayers[player].coordinates, 'library');
+          // let path = this.findShortestPathToRoom(this.cpuPlayers[player].coordinates, 'billiard');
+          // let path = this.findShortestPathToRoom(this.cpuPlayers[player].coordinates, 'conservatory');
+          // let path = this.findShortestPathToRoom(this.cpuPlayers[player].coordinates, 'ballroom');
+          // let path = this.findShortestPathToRoom(this.cpuPlayers[player].coordinates, 'kitchen');
+          // let path = this.findShortestPathToRoom(this.cpuPlayers[player].coordinates, 'dining');
           path.forEach(space => {
             if (!this.availableMovesOverride.hasOwnProperty(space.x)) {
               this.availableMovesOverride[space.x] = {};
