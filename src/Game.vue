@@ -272,15 +272,30 @@ export default {
     findShortestPathToRoom (start, room) {
       return this.findNextSpaceToTarget(start, room, []);
     },
+    findShortestPathToRoomFromRoom (startRoom, room) {
+      if (startRoom === room) {
+        return [];
+      }
+      let startingDoors = this.doorSpaces[startRoom].filter(space => this.isValidPosition(space, []));
+      let start;
+      let lowest = 0;
+      startingDoors.forEach(door => {
+        let target = this.findClosestDoorSpace(door, room);
+        let numSpaces = this.findSpacesBetween(door, target);
+        if (!start || numSpaces < lowest) {
+          start = door;
+          lowest = numSpaces;
+        }
+      });
+      return this.findShortestPathToRoom(start, room);
+    },
     findNextSpaceToTarget (position, room, path) {
       // Find the current closest door
-      console.log('==========NEXTSPACE=============');
-      console.log(position);
       path.push(position);
+      // console.log(position);
       let targetSpace = this.findClosestDoorSpace(position, room);
       // If the target space is the same as this position, we have reached the end of the path
       if (this.coordinatesEqual(position, targetSpace)) {
-        console.log(path);
         return path;
       } else {
         let nextSpace = this.findSpaceInUnbrokenPath(position, targetSpace, path);
@@ -303,23 +318,6 @@ export default {
           });
         }
         return this.findNextSpaceToTarget(nextSpace, room, path);
-        // let neighbours = this.getSpaceNeighbours(position);
-        // neighbours.forEach(space => {
-        //   let distance = this.findDistanceBetween(space, targetSpace);
-        //   let npmSpaces = this.findSpacesBetween(space, nextTarget);
-        //   if (!nextSpace || npmSpaces < lowest) {
-        //     nextSpace = space;
-        //     lowest = npmSpaces;
-        //   } else if (npmSpaces === lowest) {
-        //     nextSpace = this.findSpaceInUnbrokenPath(nextTarget, position);
-        //   }
-        // });
-        // let nextSpace = this.findSpaceInUnbrokenPath(targetSpace, position, path);
-        // if (!nextSpace) {
-        //   return path;
-        // }
-        // path.push(nextSpace);
-        // return this.findNextSpaceToTarget(room, nextSpace, path);
       }
     },
     findClosestDoorSpace (position, room) {
@@ -352,20 +350,22 @@ export default {
 
       // Check if can traverse x then y
       let xThenY = false;
-      if (this.canTraverseX(start, target, path)) {
-        xThenY = this.canTraverseY({ x: target.x, y: start.y }, target, path);
+      let directXPath = this.canDirectTraverseX(start, target, path);
+      if (!directXPath && this.canTraverseX(start, target, path)) {
+        xThenY = this.canDirectTraverseY({ x: target.x, y: start.y }, target, path);
       }
       // Check if can traverse y then x
       let yThenX = false;
-      if (this.canTraverseY(start, target, path)) {
-        yThenX = this.canTraverseX({ x: start.x, y: target.y }, target, path);
+      let directYPath = this.canDirectTraverseY(start, target, path);
+      if (!directYPath && this.canTraverseY(start, target, path)) {
+        yThenX = this.canDirectTraverseX({ x: start.x, y: target.y }, target, path);
       }
 
       let nextSpaces = [];
-      if (xThenY) {
+      if (xThenY || directXPath) {
         nextSpaces.push(nextX);
       }
-      if (yThenX) {
+      if (yThenX || directYPath) {
         nextSpaces.push(nextY);
       }
       if (nextSpaces.length > 0) {
@@ -414,7 +414,8 @@ export default {
     },
     canTraverseX (start, target, path) {
       if (target.x === start.x) {
-        return true;
+        // This space is already traversed
+        return false;
       }
       let direction = start.x < target.x ? 1 : -1;
       for (let x=start.x+direction; x!==target.x; x+=direction) {
@@ -426,9 +427,17 @@ export default {
       // Finally check the final space on this path
       return this.isValidPosition({ x: target.x, y: start.y }, path);
     },
+    canDirectTraverseX (start, target, path) {
+      let canTraverseX = this.canTraverseX(start, target, path);
+      if (canTraverseX) {
+        return this.coordinatesEqual({ x: target.x, y: start.y }, target);
+      }
+      return false;
+    },
     canTraverseY (start, target, path) {
       if (target.y === start.y) {
-        return true;
+        // This space is already traversed
+        return false;
       }
       let direction = start.y < target.y ? 1 : -1;
       for (let y=start.y+direction; y!==target.y; y+=direction) {
@@ -439,6 +448,13 @@ export default {
       }
       // Finally check the final space on this path
       return this.isValidPosition({ x: start.x, y: target.y }, path);
+    },
+    canDirectTraverseY (start, target, path) {
+      let canTraverseY = this.canTraverseY(start, target, path);
+      if (canTraverseY) {
+        return this.coordinatesEqual({ x: start.x, y: target.y }, target);
+      }
+      return false;
     },
     getNewTarget (target, start) {
       let { x, y } = target;
@@ -731,25 +747,39 @@ export default {
           this.turnPhase = this.phases.ROLL;
         }
         if (this.isCpuPlayer(player)) {
+          let path;
+          if (!this.isValidRoom(this.cpuPlayers[player].coordinates)) {
+            // path = this.findShortestPathToRoom(this.cpuPlayers[player].coordinates, 'lounge');
+            // path = this.findShortestPathToRoom(this.cpuPlayers[player].coordinates, 'hall');
+            // path = this.findShortestPathToRoom(this.cpuPlayers[player].coordinates, 'study');
+            // path = this.findShortestPathToRoom(this.cpuPlayers[player].coordinates, 'library');
+            // path = this.findShortestPathToRoom(this.cpuPlayers[player].coordinates, 'billiard');
+            path = this.findShortestPathToRoom(this.cpuPlayers[player].coordinates, 'conservatory');
+            // path = this.findShortestPathToRoom(this.cpuPlayers[player].coordinates, 'ballroom');
+            // path = this.findShortestPathToRoom(this.cpuPlayers[player].coordinates, 'kitchen');
+            // path = this.findShortestPathToRoom(this.cpuPlayers[player].coordinates, 'dining');
+          } else {
+            // path = this.findShortestPathToRoomFromRoom(this.cpuPlayers[player].coordinates, 'lounge');
+            // path = this.findShortestPathToRoomFromRoom(this.cpuPlayers[player].coordinates, 'hall');
+            // path = this.findShortestPathToRoomFromRoom(this.cpuPlayers[player].coordinates, 'study');
+            // path = this.findShortestPathToRoomFromRoom(this.cpuPlayers[player].coordinates, 'library');
+            // path = this.findShortestPathToRoomFromRoom(this.cpuPlayers[player].coordinates, 'billiard');
+            // path = this.findShortestPathToRoomFromRoom(this.cpuPlayers[player].coordinates, 'conservatory');
+            // path = this.findShortestPathToRoomFromRoom(this.cpuPlayers[player].coordinates, 'ballroom');
+            // path = this.findShortestPathToRoomFromRoom(this.cpuPlayers[player].coordinates, 'kitchen');
+            path = this.findShortestPathToRoomFromRoom(this.cpuPlayers[player].coordinates, 'dining');
+          }
           // let paths = {};
           // Object.keys(this.rooms).forEach(room => paths[room] = this.findShortestPathToRoom(this.cpuPlayers[player].coordinates, room));
           // console.log(paths);
-          let path = this.findShortestPathToRoom(this.cpuPlayers[player].coordinates, 'lounge');
-          // let path = this.findShortestPathToRoom(this.cpuPlayers[player].coordinates, 'hall');
-          // let path = this.findShortestPathToRoom(this.cpuPlayers[player].coordinates, 'study');
-          // let path = this.findShortestPathToRoom(this.cpuPlayers[player].coordinates, 'library');
-          // let path = this.findShortestPathToRoom(this.cpuPlayers[player].coordinates, 'billiard');
-          // let path = this.findShortestPathToRoom(this.cpuPlayers[player].coordinates, 'conservatory');
-          // let path = this.findShortestPathToRoom(this.cpuPlayers[player].coordinates, 'ballroom');
-          // let path = this.findShortestPathToRoom(this.cpuPlayers[player].coordinates, 'kitchen');
-          // let path = this.findShortestPathToRoom(this.cpuPlayers[player].coordinates, 'dining');
+
           path.forEach(space => {
             if (!this.availableMovesOverride.hasOwnProperty(space.x)) {
               this.availableMovesOverride[space.x] = {};
             }
             this.availableMovesOverride[space.x][space.y] = true;
           });
-          // console.log(path);
+          console.log(path);
         }
       } else {
         this.endTurn();
