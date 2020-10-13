@@ -276,8 +276,6 @@ export default {
       // Find the current closest door
       console.log('==========NEXTSPACE=============');
       console.log(position);
-      console.log(path);
-      console.log('==========NEXTSPACE=============');
       path.push(position);
       let targetSpace = this.findClosestDoorSpace(position, room);
       // If the target space is the same as this position, we have reached the end of the path
@@ -380,21 +378,21 @@ export default {
       // Find the midpoint
       let mid = this.getMidpoint(start, target);
       let m1 = (start.y - target.y) / (start.x - target.x);
-      let m2 = -1 / m1;
+      let m2 = (m1 === 0) ? 0 : -1 / m1;
       let b2 = mid.y - (m2 * mid.x);
       // With the perpendicular line, find the closest valid space
       let x = Math.floor(mid.x);
-      for (let delta=1; delta<10; delta++) {
+      for (let delta=0; delta<10; delta+=0.1) {
         let detours = [];
 
         let x1 = x + delta;
-        let detour1 = { x: x1, y: Math.floor((m2*(x1))+b2) };
+        let detour1 = { x: Math.floor(x1), y: Math.floor((m2*(x1))+b2) };
         if (this.isValidPosition(detour1, path)) {
           detours.push(detour1);
         }
 
         let x2 = x - delta;
-        let detour2 = { x: x2, y: Math.floor((m2*(x2))+b2) };
+        let detour2 = { x: Math.floor(x2), y: Math.floor((m2*(x2))+b2) };
         if (this.isValidPosition(detour2, path)) {
           detours.push(detour2);
         }
@@ -415,29 +413,18 @@ export default {
       return hSpaces + vSpaces;
     },
     canTraverseX (start, target, path) {
-      // console.log(`traverseX: ${start.x},${start.y}`);
       if (target.x === start.x) {
         return true;
       }
       let direction = start.x < target.x ? 1 : -1;
-      // console.log(target.x);
-      console.log('==================');
       for (let x=start.x+direction; x!==target.x; x+=direction) {
         let position = { x: x, y: start.y };
-        // console.log(x);
-
         if (!this.isValidPosition(position, path)) {
-          // console.log('returned false');
-
-          console.log(position);
-          // console.log(this.isPositionOnPath(position, path));
-          console.log(path);
-
           return false;
         }
       }
-      console.log('==================');
-      return true;
+      // Finally check the final space on this path
+      return this.isValidPosition({ x: target.x, y: start.y }, path);
     },
     canTraverseY (start, target, path) {
       if (target.y === start.y) {
@@ -450,7 +437,8 @@ export default {
           return false;
         }
       }
-      return true;
+      // Finally check the final space on this path
+      return this.isValidPosition({ x: start.x, y: target.y }, path);
     },
     getNewTarget (target, start) {
       let { x, y } = target;
@@ -784,7 +772,7 @@ export default {
             this.cpuPlayers[player] = new CpuEasy(this.playerCards[player], this.playerCoordinates[player], this.turnOrder);
           }
         });
-        this.currentTurn = 2;
+        this.currentTurn = 0;
       }
     },
     turnPhase (phase) {
