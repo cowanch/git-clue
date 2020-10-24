@@ -1,10 +1,11 @@
 /**
   Adds path finding algorithms for the game board
 **/
+import gridMap from '@/mixins/gridMap.mixin';
 import coordinates from '@/mixins/coordinates.mixin';
 
 export default {
-  mixins: [coordinates],
+  mixins: [gridMap, coordinates],
   data () {
     return {
       playerCoordinates: {}

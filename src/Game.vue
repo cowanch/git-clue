@@ -20,7 +20,6 @@
                     :game-over="playerGameOver[this.turnPlayer]"
                     :player-won="hasPlayerWon"
                     :is-human-turn="isHumanPlayer(this.turnPlayer)"
-                    :cpu-action="cpuAction"
                     @die-rolled="rollPhase"
                     @suggest="suggestPhase"
                     @accuse="accusePhase"
@@ -61,15 +60,13 @@ import shuffle from '@/utils/shuffle';
 import rooms from '@/mixins/rooms.mixin';
 import deckUtil from '@/mixins/deck.mixin';
 import turnPhases from '@/mixins/turnPhases.mixin';
-import coordinates from '@/mixins/coordinates.mixin';
-import gridMap from '@/mixins/gridMap.mixin';
 import pathfinding from '@/mixins/pathfinding.mixin';
 // Computer Player AI
 import CpuEasy from '@/cpu/CpuEasy';
 
 export default {
   name: 'Game',
-  mixins: [rooms, deckUtil, turnPhases, coordinates, gridMap, pathfinding],
+  mixins: [rooms, deckUtil, turnPhases, pathfinding],
   data () {
     return {
       playerCoordinates: {},
@@ -86,7 +83,6 @@ export default {
       turnPhase: null,
       messages: [],
       cardSelection: [],
-      cpuAction: '',
       cpuPlayers: {}
     };
   },
