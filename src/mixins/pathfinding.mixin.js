@@ -3,28 +3,38 @@
 **/
 import gridMap from '@/mixins/gridMap.mixin';
 import coordinates from '@/mixins/coordinates.mixin';
+import rooms from '@/mixins/rooms.mixin';
 
 export default {
-  mixins: [gridMap, coordinates],
+  mixins: [gridMap, coordinates, rooms],
   data () {
     return {
       playerCoordinates: {}
     };
   },
   methods: {
+    // Checks if the passed in position can be traversed on
     isValidPosition (position, path) {
+      // A move can be traversed if
+      // - it exists in the grid map
+      // - another token is not occupying it
+      // - the move position does not exist in the path
       return this.isPositionOnBoard(position) && !this.isPositionOnPath(position, path) && !this.isPlayerOnPosition(position);
     },
+    // Checks if the passed in position is in the passed in path
     isPositionOnPath (position, path) {
       return path.some(pathPosition => this.coordinatesEqual(position, pathPosition));
     },
+    // Checks if the passed in room is in the passed in path
     isRoomOnPath (room, path) {
       return path.some(pathRoom => room === pathRoom);
     },
+    // Checks if a player currently occupies the passed in position
     isPlayerOnPosition (position) {
       return Object.values(this.playerCoordinates).filter(playerPosition => playerPosition !== null)
                                                   .some(playerPosition => this.coordinatesEqual(position, playerPosition));
     },
+    // Given a starting position and a number of moves, get a list of coordinates that can be landed on
     findAvailableMoves (start, moves) {
       let pathStart = [];
       let positions = [];
@@ -44,27 +54,21 @@ export default {
       });
       return availableMoves;
     },
+    // Checks remaining moves, and if any are remaining, continue along each direction
+    // Otherwise, add the current position as an available move
     addNextMove (position, path, remaining, availableMoves) {
-      let { x, y } = position;
       if (remaining === 0) {
         // End of our recursive chain
+        let { x, y } = position;
         if (!availableMoves.hasOwnProperty(x)) {
           availableMoves[x] = {};
         }
         availableMoves[x][y] = true;
       } else {
-        // Up
-        let upPosition = { x: x, y: y-1 };
-        this.findAvailableMoveFromPosition(upPosition, path, remaining, availableMoves);
-        // Down
-        let downPosition = { x: x, y: y+1 };
-        this.findAvailableMoveFromPosition(downPosition, path, remaining, availableMoves);
-        // left
-        let leftPosition = { x: x-1, y: y };
-        this.findAvailableMoveFromPosition(leftPosition, path, remaining, availableMoves);
-        // Right
-        let rightPosition = {x: x+1, y: y};
-        this.findAvailableMoveFromPosition(rightPosition, path, remaining, availableMoves);
+        // Neighbours
+        this.getSpaceNeighbours(position).forEach(neighbour => {
+          this.findAvailableMoveFromPosition(neighbour, path, remaining, availableMoves);
+        });
         // Rooms
         // If this room has a door to a room, that room is available to enter
         let room = this.adjacentRoom(position);
@@ -73,17 +77,15 @@ export default {
         }
       }
     },
+    // Checks the current position, and if valid, add the position to the path and move on to the next move
     findAvailableMoveFromPosition (position, path, remaining, availableMoves) {
-      // A move can be traversed if
-      // - it exists in the grid map
-      // - another token is not occupying it
-      // - the move position does not exist in the path
       if (this.isValidPosition(position, path)) {
         let newPath = path.slice();
         newPath.push(position);
         this.addNextMove(position, newPath, remaining-1, availableMoves);
       }
     },
+    // Checks for a secret passage on the passed in position, and returns it if there is one
     checkSecretPassages (position) {
       let availablePassage = {};
       let room = this.getSecretPassageRoom(position);
@@ -92,10 +94,11 @@ export default {
       }
       return availablePassage;
     },
-    // Start with a position and a target room
+    // Finds the shortest path from a position to a room
     findShortestPathToRoom (start, room) {
       return this.findNextSpaceToTarget(start, room, []);
     },
+    // Finds the shortest path from one room to another
     findShortestPathToRoomFromRoom (startRoom, room) {
       if (startRoom === room) {
         return [];
@@ -113,6 +116,7 @@ export default {
       });
       return this.findShortestPathToRoom(start, room);
     },
+    // Find the next space on the shortest path to a target room
     findNextSpaceToTarget (position, room, path) {
       // Find the current closest door
       path.push(position);
@@ -129,9 +133,8 @@ export default {
           if (!detour) {
             return path;
           }
-          let neighbours = this.getSpaceNeighbours(position);
           let lowest = 0;
-          neighbours.forEach(space => {
+          this.getSpaceNeighbours(position).forEach(space => {
             if (this.isValidPosition(space, path)) {
               let distance = this.findDistanceBetween(space, detour);
               if (!nextSpace || distance < lowest) {
@@ -144,6 +147,8 @@ export default {
         return this.findNextSpaceToTarget(nextSpace, room, path);
       }
     },
+    // Given a position and a target room, find the door space with the least number of spaces to traverse
+    // Sometimes a room will have more than one door, so knowing which door is closest can help build the shortest path
     findClosestDoorSpace (position, room) {
       let lowest = 0;
       let closestSpace = null;
@@ -156,6 +161,7 @@ export default {
       });
       return closestSpace;
     },
+    // Try to find an unbroken path (horizontal then vertical or vice versa) and return the next space on that path
     findSpaceInUnbrokenPath (start, target, path) {
       // Make sure these aren't the same space
       if (this.coordinatesEqual(start, target)) {
@@ -198,6 +204,7 @@ export default {
       }
       return null;
     },
+    // Returns true if you can move along the X coordinates to reach the same X value as the target position
     canTraverseX (start, target, path) {
       if (target.x === start.x) {
         // This space is already traversed
@@ -213,6 +220,7 @@ export default {
       // Finally check the final space on this path
       return this.isValidPosition({ x: target.x, y: start.y }, path);
     },
+    // Returns true if you can move along the X coordinates to reach the target position exactly
     canDirectTraverseX (start, target, path) {
       let canTraverseX = this.canTraverseX(start, target, path);
       if (canTraverseX) {
@@ -220,6 +228,7 @@ export default {
       }
       return false;
     },
+    // Returns true if you can move along the Y coordinates to reach the same Y value as the target position
     canTraverseY (start, target, path) {
       if (target.y === start.y) {
         // This space is already traversed
@@ -235,6 +244,7 @@ export default {
       // Finally check the final space on this path
       return this.isValidPosition({ x: start.x, y: target.y }, path);
     },
+    // Returns true if you can move along the Y coordinates to reach the target position exactly
     canDirectTraverseY (start, target, path) {
       let canTraverseY = this.canTraverseY(start, target, path);
       if (canTraverseY) {
@@ -242,6 +252,7 @@ export default {
       }
       return false;
     },
+    // Find the closest space on the board that is perpendicular to the direct line between the start and target positions
     findDetourSpace (start, target, path) {
       // Find the midpoint
       let mid = this.getMidpoint(start, target);
@@ -272,6 +283,7 @@ export default {
       }
       return null;
     },
+    // Build a list of positions that are direct neighbours of the passed in position (does not check the board for validity)
     getSpaceNeighbours (position) {
       let { x, y } = position;
       let neighbours = [];

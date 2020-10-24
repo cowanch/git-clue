@@ -22,8 +22,7 @@
           Make Accusation
         </button>
       </template>
-      <button v-else
-              @click="cpuNext">
+      <button v-else>
         Next
       </button>
     </div>
@@ -164,9 +163,6 @@ export default {
     },
     disprove (card) {
       this.$emit('disprove', card);
-    },
-    cpuNext () {
-      
     }
   },
   watch: {
