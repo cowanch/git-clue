@@ -10,9 +10,7 @@ export default {
   computed: {
     gridMap () {
       // Convert the board specs into an object that's easy to access
-      let map = {
-        doors: {}
-      };
+      let map = {};
       for (let rowIdx in grid) {
         for (let cell of grid[rowIdx]) {
           let x = cell.col;
@@ -23,11 +21,6 @@ export default {
           // Check to see if this cell has an adjacent room
           if (cell.room) {
             map[x][y] = { room: cell.room };
-            // Add this position as a reverse lookup from the room
-            if (!map.doors.hasOwnProperty(cell.room)) {
-              map.doors[cell.room] = [];
-            }
-            map.doors[cell.room].push({ x:x, y:y });
           } else {
             map[x][y] = true;
           }

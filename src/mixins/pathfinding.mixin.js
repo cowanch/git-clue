@@ -40,9 +40,9 @@ export default {
       let positions = [];
       let remaining = moves;
       // If the player is in a room, they can have multiple starting points
-      if (this.gridMap.doors.hasOwnProperty(start)) {
+      if (this.doorSpaces.hasOwnProperty(start)) {
         pathStart.push(start);
-        positions = this.gridMap.doors[start];
+        positions = this.doorSpaces[start];
         remaining--;
       } else {
         positions.push(start);
