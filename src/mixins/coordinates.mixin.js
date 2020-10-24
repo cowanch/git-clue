@@ -12,12 +12,26 @@ export default {
       }
       return false;
     },
-    getMidpoint (point1, point2) {
-      if (this.isCoordinates(point1) && this.isCoordinates(point2)) {
+    getMidpoint (obj1, obj2) {
+      if (this.isCoordinates(obj1) && this.isCoordinates(obj2)) {
         return {
-          x: (point1.x + point2.x) / 2,
-          y: (point1.y + point2.y) / 2
+          x: (obj1.x + obj2.x) / 2,
+          y: (obj1.y + obj2.y) / 2
         };
+      }
+      return null;
+    },
+    findDistanceBetween (obj1, obj2) {
+      if (this.isCoordinates(obj1) && this.isCoordinates(obj2)) {
+        return Math.sqrt(Math.pow(obj1.x - obj2.x, 2) + Math.pow(obj1.y - obj2.y, 2));
+      }
+      return null;
+    },
+    findSpacesBetween (obj1, obj2) {
+      if (this.isCoordinates(obj1) && this.isCoordinates(obj2)) {
+        let hSpaces = Math.abs(obj1.x - obj2.x);
+        let vSpaces = Math.abs(obj1.y - obj2.y);
+        return hSpaces + vSpaces;
       }
       return null;
     }
