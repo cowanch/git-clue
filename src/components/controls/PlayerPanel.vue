@@ -17,6 +17,7 @@
                 :player-position="playerPosition"
                 :card-selection="cardSelection"
                 :game-over="gameOver"
+                :is-human-turn="isHumanTurn"
                 @disprove="card => $emit('disprove', card)"
                 @die-rolled="roll => $emit('die-rolled', roll)"
                 @end-turn="() => $emit('end-turn')"
@@ -81,7 +82,8 @@ export default {
     playerPosition: [String, Object],
     messages: Array,
     gameOver: Boolean,
-    playerWon: Boolean
+    playerWon: Boolean,
+    isHumanTurn: Boolean
   },
   data () {
     return {

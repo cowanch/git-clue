@@ -19,6 +19,7 @@
                     :messages="messages"
                     :game-over="playerGameOver[this.turnPlayer]"
                     :player-won="hasPlayerWon"
+                    :is-human-turn="isHumanPlayer(this.turnPlayer)"
                     @die-rolled="rollPhase"
                     @suggest="suggestPhase"
                     @accuse="accusePhase"
@@ -52,7 +53,6 @@ import PlayerSelect from '@/components/controls/PlayerSelect';
 import PlayerPanel from '@/components/controls/PlayerPanel';
 // Specs
 import startingPositions from '@/specs/startingPositions';
-import grid from '@/specs/boardSpecs';
 import {playerTypes} from '@/specs/playerTypeSpecs';
 // Utils
 import shuffle from '@/utils/shuffle';
@@ -60,10 +60,13 @@ import shuffle from '@/utils/shuffle';
 import rooms from '@/mixins/rooms.mixin';
 import deckUtil from '@/mixins/deck.mixin';
 import turnPhases from '@/mixins/turnPhases.mixin';
+import pathfinding from '@/mixins/pathfinding.mixin';
+// Computer Player AI
+import CpuEasy from '@/cpu/CpuEasy';
 
 export default {
   name: 'Game',
-  mixins: [rooms,deckUtil,turnPhases],
+  mixins: [rooms, deckUtil, turnPhases, pathfinding],
   data () {
     return {
       playerCoordinates: {},
@@ -79,7 +82,8 @@ export default {
       envelope: {},
       turnPhase: null,
       messages: [],
-      cardSelection: []
+      cardSelection: [],
+      cpuPlayers: {}
     };
   },
   computed: {
@@ -113,33 +117,6 @@ export default {
         availableMoves = this.checkSecretPassages(this.turnPlayerPosition);
       }
       return availableMoves;
-    },
-    gridMap () {
-      // Convert the board specs into an object that's easy to access
-      let map = {
-        doors: {}
-      };
-      for (let rowIdx in grid) {
-        for (let cell of grid[rowIdx]) {
-          let x = cell.col;
-          if (!map.hasOwnProperty(x)) {
-            map[x] = {};
-          }
-          let y = parseInt(rowIdx);
-          // Check to see if this cell has an adjacent room
-          if (cell.room) {
-            map[x][y] = { room: cell.room };
-            // Add this position as a reverse lookup from the room
-            if (!map.doors.hasOwnProperty(cell.room)) {
-              map.doors[cell.room] = [];
-            }
-            map.doors[cell.room].push({ x:x, y:y });
-          } else {
-            map[x][y] = true;
-          }
-        }
-      }
-      return map;
     }
   },
   created () {
@@ -158,95 +135,8 @@ export default {
       roomKeys.splice(rand, 1);
     });
     this.addMessage('Welcome to Clue!');
-    this.currentTurn = 0;
   },
   methods: {
-    findAvailableMoves (start, moves) {
-      let pathStart = [];
-      let positions = [];
-      let remaining = moves;
-      // If the player is in a room, they can have multiple starting points
-      if (this.gridMap.doors.hasOwnProperty(start)) {
-        pathStart.push(start);
-        positions = this.gridMap.doors[start];
-        remaining--;
-      } else {
-        positions.push(start);
-      }
-      let availableMoves = {};
-      positions.forEach(position => {
-        let path = pathStart.concat([position]);
-        this.addNextMove(position, path, remaining, availableMoves);
-      });
-      return availableMoves;
-    },
-    addNextMove (position, path, remaining, availableMoves) {
-      let { x, y } = position;
-      if (remaining === 0) {
-        // End of our recursive chain
-        if (!availableMoves.hasOwnProperty(x)) {
-          availableMoves[x] = {};
-        }
-        availableMoves[x][y] = true;
-      } else {
-        // Up
-        let upPosition = { x: x, y: y-1 };
-        this.findAvailableMoveFromPosition(upPosition, path, remaining, availableMoves);
-        // Down
-        let downPosition = { x: x, y: y+1 };
-        this.findAvailableMoveFromPosition(downPosition, path, remaining, availableMoves);
-        // left
-        let leftPosition = { x: x-1, y: y };
-        this.findAvailableMoveFromPosition(leftPosition, path, remaining, availableMoves);
-        // Right
-        let rightPosition = {x: x+1, y: y};
-        this.findAvailableMoveFromPosition(rightPosition, path, remaining, availableMoves);
-        // Rooms
-        // If this room has a door to a room, that room is available to enter
-        let room = this.adjacentRoom(position);
-        if (room && !this.isRoomOnPath(room, path)) {
-          availableMoves[room] = true;
-        }
-      }
-    },
-    findAvailableMoveFromPosition (position, path, remaining, availableMoves) {
-      // A move can be traversed if
-      // - it exists in the grid map
-      // - another token is not occupying it
-      // - the move position does not exist in the path
-      if (this.isPositionOnBoard(position) && !this.isPositionOnPath(position, path) && !this.isPlayerOnPosition(position)) {
-        let newPath = path.slice();
-        newPath.push(position);
-        this.addNextMove(position, newPath, remaining-1, availableMoves);
-      }
-    },
-    isPositionOnBoard (position) {
-      let { x, y } = position;
-      return this.gridMap.hasOwnProperty(x) && this.gridMap[x].hasOwnProperty(y);
-    },
-    adjacentRoom (position) {
-      if (this.isPositionOnBoard(position) && this.gridMap[position.x][position.y].room) {
-        return this.gridMap[position.x][position.y].room;
-      }
-      return null;
-    },
-    isPositionOnPath (position, path) {
-      return path.some(pathPosition => position.x === pathPosition.x && position.y === pathPosition.y);
-    },
-    isRoomOnPath (room, path) {
-      return path.some(pathRoom => room === pathRoom);
-    },
-    isPlayerOnPosition (position) {
-      return Object.values(this.playerCoordinates).some(playerPosition => playerPosition !== null && position.x === playerPosition.x && position.y === playerPosition.y);
-    },
-    checkSecretPassages (position) {
-      let availablePassage = {};
-      let room = this.getSecretPassageRoom(position);
-      if (room) {
-        availablePassage[`passage-${room}`] = true;
-      }
-      return availablePassage;
-    },
     isHumanPlayer (player) {
       return this.playerSelections[player] === playerTypes.HUMAN;
     },
@@ -430,6 +320,14 @@ export default {
         } else {
           this.turnPhase = this.phases.ROLL;
         }
+        if (this.isCpuPlayer(player)) {
+          let paths = {};
+          if (!this.isValidRoom(this.cpuPlayers[player].coordinates)) {
+            Object.keys(this.rooms).forEach(room => paths[room] = this.findShortestPathToRoom(this.cpuPlayers[player].coordinates, room));
+          } else {
+            Object.keys(this.rooms).forEach(room => paths[room] = this.findShortestPathToRoomFromRoom(this.cpuPlayers[player].coordinates, room));
+          }
+        }
       } else {
         this.endTurn();
       }
@@ -446,6 +344,12 @@ export default {
       if (!isSelecting) {
         let deck = shuffle(this.getRemainingDeckAfterPickingEnvelopeCards());
         this.dealCardsToPlayers(deck);
+        this.turnOrder.forEach(player => {
+          if (this.isCpuPlayer(player)) {
+            this.cpuPlayers[player] = new CpuEasy(this.playerCards[player], this.playerCoordinates[player], this.turnOrder);
+          }
+        });
+        this.currentTurn = 0;
       }
     },
     turnPhase (phase) {
