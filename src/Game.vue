@@ -20,12 +20,14 @@
                     :game-over="playerGameOver[this.turnPlayer]"
                     :player-won="hasPlayerWon"
                     :is-human-turn="isHumanPlayer(this.turnPlayer)"
+                    :cpu-action="cpuAction"
                     @die-rolled="rollPhase"
                     @suggest="suggestPhase"
                     @accuse="accusePhase"
                     @end-turn="endTurn"
                     @show-suggest-options="suggestOptionsShown"
-                    @disprove="disprovePhase"/>
+                    @disprove="disprovePhase"
+                    @cpu-next="cpuNext"/>
     </div>
   </div>
 </template>
@@ -53,7 +55,8 @@ import PlayerSelect from '@/components/controls/PlayerSelect';
 import PlayerPanel from '@/components/controls/PlayerPanel';
 // Specs
 import startingPositions from '@/specs/startingPositions';
-import {playerTypes} from '@/specs/playerTypeSpecs';
+import { playerTypes } from '@/specs/playerTypeSpecs';
+import { actions } from '@/specs/cpuSpecs';
 // Utils
 import shuffle from '@/utils/shuffle';
 // Mixins
@@ -83,7 +86,8 @@ export default {
       turnPhase: null,
       messages: [],
       cardSelection: [],
-      cpuPlayers: {}
+      cpuPlayers: {},
+      cpuAction: null
     };
   },
   computed: {
@@ -101,6 +105,12 @@ export default {
     },
     turnPlayerPosition () {
       return this.playerCoordinates[this.turnPlayer];
+    },
+    turnCpuPlayer () {
+      if (this.isCpuPlayer(this.turnPlayer)) {
+        return this.cpuPlayers[this.turnPlayer];
+      }
+      return null;
     },
     turnPlayerLastPosition: {
       get () { return this.lastTurnCoordinates[this.turnPlayer]; },
@@ -164,7 +174,11 @@ export default {
     },
     rollPhase (roll) {
       if (this.isRollPhase(this.turnPhase)) {
-        this.dieRoll = roll;
+        if (this.isHumanPlayer(this.turnPlayer)) {
+          this.dieRoll = roll;
+        } else if (this.isCpuPlayer(this.turnPlayer)) {
+          this.turnCpuPlayer.setAvailableMoves(this.findAvailableMoves(this.turnPlayerPosition, roll));
+        }
         this.turnPhase = this.phases.MOVE;
       }
     },
@@ -283,6 +297,25 @@ export default {
         this.turnPhase = this.phases.SUGGEST;
       }
     },
+    cpuStart () {
+      if (this.isCpuPlayer(this.turnPlayer)) {
+        let cpuPlayer = this.cpuPlayers[this.turnPlayer];
+        let paths = {};
+        if (!this.isValidRoom(cpuPlayer.coordinates)) {
+          Object.keys(this.rooms).forEach(room => paths[room] = this.findShortestPathToRoom(cpuPlayer.coordinates, room));
+        } else {
+          Object.keys(this.rooms).forEach(room => paths[room] = this.findShortestPathToRoomFromRoom(cpuPlayer.coordinates, room));
+        }
+        this.cpuAction = cpuPlayer.startTurn(paths, this.turnPhase);
+      }
+    },
+    cpuNext () {
+      if (this.isCpuPlayer(this.turnPlayer)) {
+        if (this.cpuAction.action === actions.MOVE) {
+          this.movePhase(this.cpuAction.moveTo);
+        }
+      }
+    },
     addSuggestionMessage (suggestion) {
       let {suspect, weapon, room} = suggestion;
       let suspectText = this.suspects[suspect];
@@ -321,12 +354,7 @@ export default {
           this.turnPhase = this.phases.ROLL;
         }
         if (this.isCpuPlayer(player)) {
-          let paths = {};
-          if (!this.isValidRoom(this.cpuPlayers[player].coordinates)) {
-            Object.keys(this.rooms).forEach(room => paths[room] = this.findShortestPathToRoom(this.cpuPlayers[player].coordinates, room));
-          } else {
-            Object.keys(this.rooms).forEach(room => paths[room] = this.findShortestPathToRoomFromRoom(this.cpuPlayers[player].coordinates, room));
-          }
+          this.cpuStart();
         }
       } else {
         this.endTurn();
@@ -346,7 +374,7 @@ export default {
         this.dealCardsToPlayers(deck);
         this.turnOrder.forEach(player => {
           if (this.isCpuPlayer(player)) {
-            this.cpuPlayers[player] = new CpuEasy(this.playerCards[player], this.playerCoordinates[player], this.turnOrder);
+            this.cpuPlayers[player] = new CpuEasy(player, this.playerCards[player], this.playerCoordinates[player], this.turnOrder);
           }
         });
         this.currentTurn = 0;
@@ -367,6 +395,9 @@ export default {
         this.addMessage(msg);
       } else if (phase === this.phases.SUGGEST) {
         this.addMessage('Make a suggestion');
+      }
+      if (this.isCpuPlayer(this.turnPlayer)) {
+        this.cpuAction = this.turnCpuPlayer.getNextMove(phase);
       }
     }
   },

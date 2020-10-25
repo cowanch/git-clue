@@ -18,12 +18,14 @@
                 :card-selection="cardSelection"
                 :game-over="gameOver"
                 :is-human-turn="isHumanTurn"
+                :cpu-action="cpuAction"
                 @disprove="card => $emit('disprove', card)"
                 @die-rolled="roll => $emit('die-rolled', roll)"
                 @end-turn="() => $emit('end-turn')"
                 @show-suggest-options="show => $emit('show-suggest-options', show)"
                 @suggest="suggestion => $emit('suggest', suggestion)"
-                @accuse="accusation => $emit('accuse', accusation)"/>
+                @accuse="accusation => $emit('accuse', accusation)"
+                @cpu-next="() => $emit('cpu-next')"/>
     <div class="css-notepad-and-cards"
          v-show="isTabOpen('notepad-cards')">
       <notepad class="css-panel"/>
@@ -83,7 +85,8 @@ export default {
     messages: Array,
     gameOver: Boolean,
     playerWon: Boolean,
-    isHumanTurn: Boolean
+    isHumanTurn: Boolean,
+    cpuAction: Object
   },
   data () {
     return {
