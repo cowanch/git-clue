@@ -17,13 +17,14 @@ class CpuEasy extends Cpu {
     let disprovedRooms = this.getRoomsOfState(notepadStates.DISPROVED);
     let filteredRoomPaths = {};
     console.log(disprovedRooms);
+    // Filter out the rooms that have been disproved (we won't visit those)
     filteredRoomPaths = Object.keys(roomPaths).filter(room => !disprovedRooms.includes(room));
     console.log(filteredRoomPaths);
     let leastSteps = 0;
     let closestRoom = null;
     filteredRoomPaths.forEach(room => {
       let steps = roomPaths[room].length;
-      if (closestRoom === null || steps < leastSteps) {
+      if (steps > 0 && (closestRoom === null || steps < leastSteps)) {
         closestRoom = room;
         leastSteps = steps;
       } else if (steps === leastSteps) {
@@ -51,6 +52,8 @@ class CpuEasy extends Cpu {
         action: actions.MOVE,
         moveTo: this.chooseSpaceToMove()
       };
+    } else {
+      return { action: actions.END };
     }
   }
 

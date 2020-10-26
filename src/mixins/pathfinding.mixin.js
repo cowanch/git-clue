@@ -114,7 +114,7 @@ export default {
           lowest = numSpaces;
         }
       });
-      return this.findShortestPathToRoom(start, room);
+      return this.findNextSpaceToTarget(start, room, [room]);
     },
     // Find the next space on the shortest path to a target room
     findNextSpaceToTarget (position, room, path) {

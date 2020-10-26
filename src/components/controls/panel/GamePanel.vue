@@ -171,6 +171,8 @@ export default {
     handleCpuNext () {
       if (this.cpuAction.action === actions.ROLL) {
         this.rollDie();
+      } else if (this.cpuAction.action === actions.END) {
+        this.endTurn();
       } else {
         this.$emit('cpu-next');
       }

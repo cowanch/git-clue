@@ -195,6 +195,7 @@ export default {
         // Move the player and reset the die
         this.movePlayerTo(this.turnPlayer, moveTo);
         this.dieRoll = 0;
+        this.availableMoveOverride = {};
         // Check to see if the player is in a room
         if (this.isValidRoom(this.turnPlayerPosition)) {
           this.turnPhase = this.phases.SUGGEST;
