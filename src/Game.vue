@@ -87,7 +87,8 @@ export default {
       messages: [],
       cardSelection: [],
       cpuPlayers: {},
-      cpuAction: null
+      cpuAction: null,
+      availableMoveOverride: null
     };
   },
   computed: {
@@ -120,6 +121,9 @@ export default {
       return Object.keys(this.playerSelections).find(key => this.isHumanPlayer(key));
     },
     availableMoves () {
+      if (this.availableMoveOverride) {
+        return this.availableMoveOverride;
+      }
       let availableMoves = {};
       if (this.dieRoll > 0) {
         availableMoves = this.findAvailableMoves(this.turnPlayerPosition, this.dieRoll);
@@ -145,6 +149,10 @@ export default {
       roomKeys.splice(rand, 1);
     });
     this.addMessage('Welcome to Clue!');
+
+    this.playerSelections.white = playerTypes.CPU_EASY;
+    this.playerSelections.peacock = playerTypes.CPU_EASY;
+    this.playerSelections.plum = playerTypes.CPU_EASY;
   },
   methods: {
     isHumanPlayer (player) {
@@ -299,14 +307,26 @@ export default {
     },
     cpuStart () {
       if (this.isCpuPlayer(this.turnPlayer)) {
-        let cpuPlayer = this.cpuPlayers[this.turnPlayer];
         let paths = {};
-        if (!this.isValidRoom(cpuPlayer.coordinates)) {
-          Object.keys(this.rooms).forEach(room => paths[room] = this.findShortestPathToRoom(cpuPlayer.coordinates, room));
+        if (!this.isValidRoom(this.turnPlayerPosition)) {
+          Object.keys(this.rooms).forEach(room => paths[room] = this.findShortestPathToRoom(this.turnPlayerPosition, room));
         } else {
-          Object.keys(this.rooms).forEach(room => paths[room] = this.findShortestPathToRoomFromRoom(cpuPlayer.coordinates, room));
+          Object.keys(this.rooms).forEach(room => paths[room] = this.findShortestPathToRoomFromRoom(this.turnPlayerPosition, room));
         }
-        this.cpuAction = cpuPlayer.startTurn(paths, this.turnPhase);
+        this.cpuAction = this.turnCpuPlayer.startTurn(paths, this.turnPhase);
+        // let path = this.findShortestPathToRoom(this.turnPlayerPosition, 'conservatory');
+        let path = this.turnCpuPlayer.targetPath;
+        this.availableMoveOverride = {};
+        path.forEach(space => {
+          if (this.isValidRoom(space)) {
+            this.availableMoves[space] = true;
+          } else if (space !== null) {
+            if (!this.availableMoveOverride.hasOwnProperty(space.x)) {
+              this.availableMoveOverride[space.x] = {};
+            }
+            this.availableMoveOverride[space.x][space.y] = true;
+          }
+        });
       }
     },
     cpuNext () {

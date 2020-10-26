@@ -60,7 +60,8 @@ class CpuEasy extends Cpu {
     // Go down as far as you can down the target path
     let selectedSpace = null;
     this.targetPath.forEach(space => {
-      if (this.availableMoves.hasOwnProperty(space.x) && this.availableMoves[space.x].hasOwnProperty(space.y)) {
+      if (this.availableMoves.hasOwnProperty(space) ||
+          this.availableMoves.hasOwnProperty(space.x) && this.availableMoves[space.x].hasOwnProperty(space.y)) {
         selectedSpace = space;
       }
     });
