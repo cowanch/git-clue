@@ -15,16 +15,20 @@ class CpuEasy extends Cpu {
     this.targetRoom = null;
     console.log(roomPaths);
     let disprovedRooms = this.getRoomsOfState(notepadStates.DISPROVED);
-    let filteredRoomPaths = {};
     console.log(disprovedRooms);
-    // Filter out the rooms that have been disproved (we won't visit those)
-    filteredRoomPaths = Object.keys(roomPaths).filter(room => !disprovedRooms.includes(room));
+    let filteredRoomPaths = Object.keys(roomPaths).filter(room => {
+      // Filter out paths that are inaccessible, rooms that this player is already in, and disproven rooms
+      let path = roomPaths[room];
+      return path !== undefined &&
+             path.length > 0 &&
+             !disprovedRooms.includes(room)
+    });
     console.log(filteredRoomPaths);
     let leastSteps = 0;
     let closestRoom = null;
     filteredRoomPaths.forEach(room => {
       let steps = roomPaths[room].length;
-      if (steps > 0 && (closestRoom === null || steps < leastSteps)) {
+      if (closestRoom === null || steps < leastSteps) {
         closestRoom = room;
         leastSteps = steps;
       } else if (steps === leastSteps) {

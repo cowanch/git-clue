@@ -96,6 +96,7 @@ export default {
     },
     // Finds the shortest path from a position to a room
     findShortestPathToRoom (start, room) {
+      console.log(`${room}============================`);
       return this.findNextSpaceToTarget(start, room, []);
     },
     // Finds the shortest path from one room to another
@@ -107,7 +108,7 @@ export default {
       let start;
       let lowest = 0;
       startingDoors.forEach(door => {
-        let target = this.findClosestDoorSpace(door, room);
+        let target = this.findClosestDoorSpace(door, room, []);
         let numSpaces = this.findSpacesBetween(door, target);
         if (!start || numSpaces < lowest) {
           start = door;
@@ -121,7 +122,7 @@ export default {
       // Find the current closest door
       path.push(position);
       // console.log(position);
-      let doorSpace = this.findClosestDoorSpace(position, room);
+      let doorSpace = this.findClosestDoorSpace(position, room, path);
       let targetSpace = doorSpace;
       // If the target space is the same as this position, we have reached the end of the path
       if (this.coordinatesEqual(position, targetSpace) || position === null) {
@@ -129,13 +130,12 @@ export default {
         return path;
       } else {
         let nextSpace = null;
-        // let count = 0;
+        let count = 0;
         // console.log('START=========================');
         // console.log(position);
         // while (!nextSpace && count < 20) {
-        while (!nextSpace) {
-          // console.log('targetSpace');
-          // console.log(targetSpace);
+        while (!nextSpace && count < 10) {
+          console.log(targetSpace);
           nextSpace = this.findSpaceInUnbrokenPath(position, targetSpace, path, doorSpace);
           if (!nextSpace) {
             targetSpace = this.findDetourSpace(position, targetSpace, path);
@@ -143,24 +143,27 @@ export default {
           // if (!targetSpace) {
           //   break;
           // }
-          // count++;
+          count++;
         }
-        // if (!nextSpace) {
-        //   return path;
-        // }
+        // If after 10 attempts we can't find a nextSpace, the path is most likely blocked and the room is inaccessible
+        if (!nextSpace) {
+          return undefined;
+        }
         return this.findNextSpaceToTarget(nextSpace, room, path);
       }
     },
     // Given a position and a target room, find the door space with the least number of spaces to traverse
     // Sometimes a room will have more than one door, so knowing which door is closest can help build the shortest path
-    findClosestDoorSpace (position, room) {
+    findClosestDoorSpace (position, room, path) {
       let lowest = 0;
       let closestSpace = null;
       this.doorSpaces[room].forEach(space => {
-        let spaces = this.findSpacesBetween(position, space);
-        if (!closestSpace || spaces < lowest) {
-          closestSpace = space;
-          lowest = spaces;
+        if (this.isValidPosition(space, path)) {
+          let spaces = this.findSpacesBetween(position, space);
+          if (!closestSpace || spaces < lowest) {
+            closestSpace = space;
+            lowest = spaces;
+          }
         }
       });
       return closestSpace;

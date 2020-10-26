@@ -6,6 +6,6 @@ export default {
   mustard: { x: 23, y: 7 },
   white: { x: 14, y: 24 },
   green: { x: 9, y: 24 },
-  peacock: { x: 0, y: 18 },
+  peacock: { x: 16, y: 19 },
   plum: { x: 0, y: 5 }
 };
