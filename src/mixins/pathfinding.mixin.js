@@ -19,7 +19,11 @@ export default {
       // - it exists in the grid map
       // - another token is not occupying it
       // - the move position does not exist in the path
-      return this.isPositionOnBoard(position) && !this.isPositionOnPath(position, path) && !this.isPlayerOnPosition(position);
+      return this.isPositionAvailable(position) && !this.isPositionOnPath(position, path);
+    },
+    // Checks if a provided position is on the board and unoccupied
+    isPositionAvailable (position) {
+      return this.isPositionOnBoard(position) && !this.isPlayerOnPosition(position);
     },
     // Checks if the passed in position is in the passed in path
     isPositionOnPath (position, path) {
@@ -96,7 +100,7 @@ export default {
     },
     // Finds the shortest path from a position to a room
     findShortestPathToRoom (start, room) {
-      console.log(`${room}============================`);
+      // console.log(`${room}============================`);
       return this.findNextSpaceToTarget(start, room, []);
     },
     // Finds the shortest path from one room to another
@@ -108,7 +112,7 @@ export default {
       let start;
       let lowest = 0;
       startingDoors.forEach(door => {
-        let target = this.findClosestDoorSpace(door, room, []);
+        let target = this.findClosestDoorSpace(door, room);
         let numSpaces = this.findSpacesBetween(door, target);
         if (!start || numSpaces < lowest) {
           start = door;
@@ -122,20 +126,26 @@ export default {
       // Find the current closest door
       path.push(position);
       // console.log(position);
-      let doorSpace = this.findClosestDoorSpace(position, room, path);
+      let doorSpace = this.findClosestDoorSpace(position, room);
+      // If no door space can be found, the room is likely being blocked. Therefore no path can be made
+      if (!doorSpace) {
+        return undefined;
+      }
       let targetSpace = doorSpace;
+      // console.log('COMPARE======================');
+      // console.log(position);
+      // console.log(targetSpace);
       // If the target space is the same as this position, we have reached the end of the path
       if (this.coordinatesEqual(position, targetSpace) || position === null) {
         path.push(room);
         return path;
       } else {
         let nextSpace = null;
-        let count = 0;
         // console.log('START=========================');
         // console.log(position);
         // while (!nextSpace && count < 20) {
-        while (!nextSpace && count < 10) {
-          console.log(targetSpace);
+        while (!nextSpace) {
+          // console.log(targetSpace);
           nextSpace = this.findSpaceInUnbrokenPath(position, targetSpace, path, doorSpace);
           if (!nextSpace) {
             targetSpace = this.findDetourSpace(position, targetSpace, path);
@@ -143,27 +153,22 @@ export default {
           // if (!targetSpace) {
           //   break;
           // }
-          count++;
         }
-        // If after 10 attempts we can't find a nextSpace, the path is most likely blocked and the room is inaccessible
-        if (!nextSpace) {
-          return undefined;
-        }
+        // console.log('NEXTSPACE======================');
+        // console.log(nextSpace);
         return this.findNextSpaceToTarget(nextSpace, room, path);
       }
     },
     // Given a position and a target room, find the door space with the least number of spaces to traverse
     // Sometimes a room will have more than one door, so knowing which door is closest can help build the shortest path
-    findClosestDoorSpace (position, room, path) {
+    findClosestDoorSpace (position, room) {
       let lowest = 0;
       let closestSpace = null;
       this.doorSpaces[room].forEach(space => {
-        if (this.isValidPosition(space, path)) {
-          let spaces = this.findSpacesBetween(position, space);
-          if (!closestSpace || spaces < lowest) {
-            closestSpace = space;
-            lowest = spaces;
-          }
+        let spaces = this.findSpacesBetween(position, space);
+        if (spaces === 0 || (this.isPositionAvailable(space) && (!closestSpace || spaces < lowest))) {
+          closestSpace = space;
+          lowest = spaces;
         }
       });
       return closestSpace;
@@ -173,11 +178,6 @@ export default {
       // Make sure these aren't the same space
       if (this.coordinatesEqual(start, target)) {
         return target;
-      }
-
-      if (start === null) {
-        console.log('START IS NULL');
-        return null;
       }
 
       let { x, y } = start;

@@ -13,9 +13,9 @@ class CpuEasy extends Cpu {
 
     // Find the closest room that hasn't been disproven
     this.targetRoom = null;
-    console.log(roomPaths);
+    // console.log(roomPaths);
     let disprovedRooms = this.getRoomsOfState(notepadStates.DISPROVED);
-    console.log(disprovedRooms);
+    // console.log(disprovedRooms);
     let filteredRoomPaths = Object.keys(roomPaths).filter(room => {
       // Filter out paths that are inaccessible, rooms that this player is already in, and disproven rooms
       let path = roomPaths[room];
@@ -23,7 +23,7 @@ class CpuEasy extends Cpu {
              path.length > 0 &&
              !disprovedRooms.includes(room)
     });
-    console.log(filteredRoomPaths);
+    // console.log(filteredRoomPaths);
     let leastSteps = 0;
     let closestRoom = null;
     filteredRoomPaths.forEach(room => {
@@ -39,7 +39,7 @@ class CpuEasy extends Cpu {
         }
       }
     });
-    console.log(closestRoom);
+    // console.log(closestRoom);
     // The first space is the starting space, so exclude it
     // The most amount of spaces the player can go is 6
     this.targetPath = roomPaths[closestRoom].slice(1, 7);
@@ -62,8 +62,8 @@ class CpuEasy extends Cpu {
   }
 
   chooseSpaceToMove () {
-    console.log(this.targetPath);
-    console.log(this.availableMoves);
+    // console.log(this.targetPath);
+    // console.log(this.availableMoves);
     // Go down as far as you can down the target path
     let selectedSpace = null;
     this.targetPath.forEach(space => {
@@ -72,7 +72,7 @@ class CpuEasy extends Cpu {
         selectedSpace = space;
       }
     });
-    console.log(selectedSpace);
+    // console.log(selectedSpace);
     return selectedSpace;
   }
 }
