@@ -121,10 +121,12 @@ export default {
     },
     availableMoves () {
       let availableMoves = {};
-      if (this.dieRoll > 0) {
-        availableMoves = this.findAvailableMoves(this.turnPlayerPosition, this.dieRoll);
-      } else if (this.isRollPhase(this.turnPhase)) {
-        availableMoves = this.checkSecretPassages(this.turnPlayerPosition);
+      if (this.isHumanPlayer(this.turnPlayer)) {
+        if (this.dieRoll > 0) {
+          availableMoves = this.findAvailableMoves(this.turnPlayerPosition, this.dieRoll);
+        } else if (this.isRollPhase(this.turnPhase)) {
+          availableMoves = this.checkSecretPassages(this.turnPlayerPosition);
+        }
       }
       return availableMoves;
     }
