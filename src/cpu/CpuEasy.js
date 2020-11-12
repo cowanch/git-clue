@@ -5,18 +5,9 @@ import { roomNames } from '@/specs/roomSpecs';
 
 class CpuEasy extends Cpu {
   startTurn (roomPaths, phase) {
-    // Select what the player will do
-    // Roll the die and move
-    // Make a suggestion
-    // Accuse
-    // Take secret passage
-
-
     // Find the closest room that hasn't been disproven
     this.targetRoom = null;
-    console.log(roomPaths);
     let disprovedRooms = this.getRoomsOfState(notepadStates.DISPROVED);
-    // console.log(disprovedRooms);
     let filteredRoomPaths = Object.keys(roomPaths).filter(room => {
       // Filter out paths that are inaccessible, rooms that this player is already in, and disproven rooms
       let path = roomPaths[room];
@@ -24,21 +15,17 @@ class CpuEasy extends Cpu {
              path.length > 0 &&
              !disprovedRooms.includes(room)
     });
-    // console.log(filteredRoomPaths);
-    let leastSteps = 0;
-    let closestRoom = null;
-    filteredRoomPaths.forEach(room => {
+    let closestRoom = filteredRoomPaths.reduce((closest, room) => {
       let steps = roomPaths[room].length;
-      if (closestRoom === null || steps < leastSteps) {
-        closestRoom = room;
-        leastSteps = steps;
-      } else if (steps === leastSteps) {
+      let closestSteps = roomPaths[closest].length;
+      if (steps < closestSteps) {
+        return room;
+      } else if (steps === closestSteps) {
         // If the distance is the same, pick a room at random
         let rand = Math.floor(Math.random() * 2);
-        if (rand < 1) {
-          closestRoom = room;
-        }
+        return (rand < 1) ? room : closest;
       }
+      return closest;
     });
     this.targetPath = roomPaths[closestRoom];
     return this.getNextMove(phase);

@@ -7,7 +7,6 @@ class Cpu {
     this.cards = cards;
     this.coordinates = coords;
     this.notepad = {};
-    this.dieRoll = 0;
     this.availableMoves = {};
     // Build the notepad for this player
     players.forEach(player => {
