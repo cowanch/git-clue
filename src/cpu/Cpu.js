@@ -8,6 +8,7 @@ class Cpu {
     this.coordinates = coords;
     this.notepad = {};
     this.availableMoves = {};
+    this.targetPath = null;
     // Build the notepad for this player
     players.forEach(player => {
       this.notepad[player] = {};

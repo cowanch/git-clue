@@ -6,28 +6,31 @@ import { roomNames } from '@/specs/roomSpecs';
 class CpuEasy extends Cpu {
   startTurn (roomPaths, phase) {
     // Find the closest room that hasn't been disproven
-    this.targetRoom = null;
+    this.targetPath = null;
     let disprovedRooms = this.getRoomsOfState(notepadStates.DISPROVED);
-    let filteredRoomPaths = Object.keys(roomPaths).filter(room => {
-      // Filter out paths that are inaccessible, rooms that this player is already in, and disproven rooms
-      let path = roomPaths[room];
-      return path !== undefined &&
-             path.length > 0 &&
-             !disprovedRooms.includes(room)
-    });
-    let closestRoom = filteredRoomPaths.reduce((closest, room) => {
-      let steps = roomPaths[room].length;
-      let closestSteps = roomPaths[closest].length;
-      if (steps < closestSteps) {
-        return room;
-      } else if (steps === closestSteps) {
-        // If the distance is the same, pick a room at random
-        let rand = Math.floor(Math.random() * 2);
-        return (rand < 1) ? room : closest;
-      }
-      return closest;
-    });
-    this.targetPath = roomPaths[closestRoom];
+    // Filter out paths that are inaccessible and rooms that this player is already in
+    let filteredRoomPaths = Object.keys(roomPaths).filter(room => roomPaths[room] !== undefined);
+    // If there is only one path that is available (in the case that a corner room's door is blocked),
+    // take it even if the other room is disproved
+    if (filteredRoomPaths.length === 1) {
+      this.targetPath = roomPaths[filteredRoomPaths[0]];
+    } else {
+      // Filter out paths to disproven rooms
+      filteredRoomPaths = filteredRoomPaths.filter(room => !disprovedRooms.includes(room));
+      let closestRoom = filteredRoomPaths.reduce((closest, room) => {
+        let closestSteps = roomPaths[closest].length;
+        let steps = roomPaths[room].length;
+        if (steps < closestSteps) {
+          return room;
+        } else if (steps === closestSteps) {
+          // If the distance is the same, pick a room at random
+          let rand = Math.floor(Math.random() * 2);
+          return (rand < 1) ? room : closest;
+        }
+        return closest;
+      });
+      this.targetPath = roomPaths[closestRoom];
+    }
     return this.getNextMove(phase);
   }
 
@@ -54,8 +57,6 @@ class CpuEasy extends Cpu {
   }
 
   chooseSpaceToMove () {
-    // console.log(this.targetPath);
-    // console.log(this.availableMoves);
     // Go down as far as you can down the target path
     let selectedSpace = null;
     // The first space is the starting space, so exclude it
@@ -66,7 +67,6 @@ class CpuEasy extends Cpu {
         selectedSpace = space;
       }
     });
-    // console.log(selectedSpace);
     return selectedSpace;
   }
 }
