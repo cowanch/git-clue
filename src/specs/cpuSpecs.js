@@ -3,6 +3,7 @@
 **/
 export const actions = {
   ROLL: 'roll',
+  PASSAGE: 'passage',
   END: 'end'
 };
 

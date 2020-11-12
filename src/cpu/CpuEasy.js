@@ -1,6 +1,7 @@
 import Cpu from '@/cpu/Cpu';
 import { actions, notepadStates } from '@/specs/cpuSpecs';
 import { phases } from '@/specs/turnSpecs';
+import { roomNames } from '@/specs/roomSpecs';
 
 class CpuEasy extends Cpu {
   startTurn (roomPaths, phase) {
@@ -13,7 +14,7 @@ class CpuEasy extends Cpu {
 
     // Find the closest room that hasn't been disproven
     this.targetRoom = null;
-    // console.log(roomPaths);
+    console.log(roomPaths);
     let disprovedRooms = this.getRoomsOfState(notepadStates.DISPROVED);
     // console.log(disprovedRooms);
     let filteredRoomPaths = Object.keys(roomPaths).filter(room => {
@@ -39,10 +40,7 @@ class CpuEasy extends Cpu {
         }
       }
     });
-    // console.log(closestRoom);
-    // The first space is the starting space, so exclude it
-    // The most amount of spaces the player can go is 6
-    this.targetPath = roomPaths[closestRoom].slice(1, 7);
+    this.targetPath = roomPaths[closestRoom];
     return this.getNextMove(phase);
   }
 
@@ -50,7 +48,14 @@ class CpuEasy extends Cpu {
   getNextMove (phase) {
     // For now, we will just cover the roll moves
     if (phase === phases.ROLL || phase === phases.ROLL_OR_SUGGEST) {
-      return { action: actions.ROLL };
+      if (roomNames.includes(this.targetPath[0]) && this.targetPath.length === 2) {
+        return {
+          action: actions.PASSAGE,
+          moveTo: this.targetPath[1]
+        };
+      } else {
+        return { action: actions.ROLL };
+      }
     } else if (phase === phases.MOVE) {
       return {
         action: actions.MOVE,
@@ -66,7 +71,9 @@ class CpuEasy extends Cpu {
     // console.log(this.availableMoves);
     // Go down as far as you can down the target path
     let selectedSpace = null;
-    this.targetPath.forEach(space => {
+    // The first space is the starting space, so exclude it
+    // The most amount of spaces the player can go is 6
+    this.targetPath.slice(1,7).forEach(space => {
       if (this.availableMoves.hasOwnProperty(space) ||
           this.availableMoves.hasOwnProperty(space.x) && this.availableMoves[space.x].hasOwnProperty(space.y)) {
         selectedSpace = space;

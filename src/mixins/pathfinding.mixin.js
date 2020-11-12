@@ -108,6 +108,14 @@ export default {
       if (startRoom === room) {
         return [];
       }
+      // Check for a trap door shortcut
+      if (this.isSecretPassageRoom(startRoom)) {
+        let secretPassageRoom = this.getSecretPassageRoom(startRoom);
+        if (secretPassageRoom === room) {
+          return [startRoom, secretPassageRoom];
+        }
+      }
+      // Otherwise, find the nearest door space and start from there
       let startingDoors = this.doorSpaces[startRoom].filter(space => this.isValidPosition(space, []));
       let start;
       let lowest = 0;
@@ -119,7 +127,7 @@ export default {
           lowest = numSpaces;
         }
       });
-      return this.findNextSpaceToTarget(start, room, [room]);
+      return this.findNextSpaceToTarget(start, room, [startRoom]);
     },
     // Find the next space on the shortest path to a target room
     findNextSpaceToTarget (position, room, path) {

@@ -334,6 +334,8 @@ export default {
       if (this.isCpuPlayer(this.turnPlayer)) {
         if (this.cpuAction.action === actions.MOVE) {
           this.movePhase(this.cpuAction.moveTo);
+        } else if (this.cpuAction.action === actions.PASSAGE) {
+          this.movePassage(this.cpuAction.moveTo);
         }
       }
     },
