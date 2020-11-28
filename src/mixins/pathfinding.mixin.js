@@ -104,6 +104,7 @@ export default {
     },
     // Finds the shortest path from one room to another
     findShortestPathToRoomFromRoom (startRoom, room) {
+      console.log(`===${room}===`);
       if (startRoom === room) {
         return undefined;
       }
@@ -116,7 +117,8 @@ export default {
       }
       // Otherwise, find the nearest door space and start from there
       let startingDoors = this.doorSpaces[startRoom].filter(space => this.isPositionAvailable(space));
-      if (startingDoors.length > 0) {
+
+      while (startingDoors.length > 0) {
         let start = startingDoors.reduce((closest, door) => {
           let target1 = this.findClosestDoorSpace(closest, room);
           let numSpaces1 = this.findSpacesBetween(closest, target1);
@@ -124,7 +126,14 @@ export default {
           let numSpaces2 = this.findSpacesBetween(door, target2);
           return numSpaces2 < numSpaces1 ? door : closest;
         });
-        return this.findNextSpaceToTarget(start, room, [startRoom]);
+        console.log(`---------> door - ${start.x},${start.y}`);
+        let pathToRoom = this.findNextSpaceToTarget(start, room, [startRoom]);
+        if (pathToRoom !== undefined) {
+          return pathToRoom;
+        } else {
+          // If a path cannot be made from the closest door, try the next closest
+          startingDoors = startingDoors.filter(door => door !== start);
+        }
       }
       // If no door space can be found, the room we are in is likely being blocked. Therefore no path can be made
       return undefined;
@@ -133,6 +142,9 @@ export default {
     findNextSpaceToTarget (position, room, path) {
       // Find the current closest door
       path.push(position);
+      console.log('PATHPATHPATH');
+      console.log(path);
+      // console.log(position);
       let doorSpace = this.findClosestDoorSpace(position, room);
       // If no door space can be found, the room we are going to is likely being blocked. Therefore no path can be made
       if (!doorSpace) {
@@ -145,12 +157,37 @@ export default {
         return path;
       } else {
         let nextSpace = null;
+        let seen = {};
         while (!nextSpace) {
+          if (!targetSpace) {
+            return undefined;
+          } else {
+            if (!seen.hasOwnProperty(targetSpace.x)) {
+              seen[targetSpace.x] = {};
+            }
+            seen[targetSpace.x][targetSpace.y] = true;
+          }
           nextSpace = this.findSpaceInUnbrokenPath(position, targetSpace, path, doorSpace);
+          if (nextSpace && nextSpace.length === 2) {
+            // Two equally close spaces, try them both
+            for (let i=0; i<nextSpace.length; i++) {
+              console.log(`nextPossibleSpace -> ${nextSpace[i].x},${nextSpace[i].y}`);
+              let possiblePath = this.findNextSpaceToTarget(nextSpace[i], room, path.slice());
+              if (possiblePath) {
+                console.log('!!!!!!!!!!!!!!!!!!!!!!');
+                console.log(possiblePath);
+                return possiblePath;
+              }
+            }
+            // Neither space could produce a viable path
+            console.log('XXXXXXXXXXXXXXXXXXXXXXXXXXX');
+            nextSpace = null;
+          }
           if (!nextSpace) {
-            targetSpace = this.findDetourSpace(position, targetSpace, path);
+            targetSpace = this.findDetourSpace(position, targetSpace, path, seen);
           }
         }
+        console.log(`nextSpace -> ${nextSpace.x},${nextSpace.y}`);
         return this.findNextSpaceToTarget(nextSpace, room, path);
       }
     },
@@ -216,18 +253,19 @@ export default {
         nextSpaces.push(nextY);
       }
       if (nextSpaces.length > 0) {
-        // As a tiebreaker, pick the space that is closest to the door space
-        return nextSpaces.reduce((closest, space) => {
-          let spacesToDoor1 = this.findSpacesBetween(closest, door);
-          let spacesToDoor2 = this.findSpacesBetween(space, door);
-          if (spacesToDoor2 < spacesToDoor1) {
-            return space;
-          } else if (spacesToDoor2 === spacesToDoor1) {
-            let rand = Math.floor(Math.random() * 2);
-            return rand < 1 ? space : closest;
+        if (nextSpaces.length === 2) {
+          let spacesToDoor1 = this.findSpacesBetween(nextSpaces[0], door);
+          let spacesToDoor2 = this.findSpacesBetween(nextSpaces[1], door);
+          if (spacesToDoor1 < spacesToDoor2) {
+            return nextSpaces[0];
+          } else if (spacesToDoor2 < spacesToDoor1) {
+            return nextSpaces[1];
+          } else {
+            // Return both, since one may not lead down a possible path
+            return nextSpaces
           }
-          return closest;
-        });
+        }
+        return nextSpaces[0];
       }
       return null;
     },
@@ -280,58 +318,114 @@ export default {
       return false;
     },
     // Find the closest space on the board that is perpendicular to the direct line between the start and target positions
-    findDetourSpace (start, target, path) {
+    findDetourSpace (start, target, path, seen) {
       // Find the midpoint
       let mid = this.getMidpoint(start, target);
       let m1 = (start.y - target.y) / (start.x - target.x);
       let m2 = (m1 === 0) ? undefined : -1 / m1;
-      let x = Math.floor(mid.x);
+      let b2 = mid.y - (m2 * mid.x);
+      // let x = Math.floor(mid.x);
       // If the perpendicular slope is undefined, return the nearest space with the same x value
-      if (m2 === undefined) {
-        let y = Math.floor(mid.y);
-        for (let delta=0; delta<10; delta++) {
-          let detours = [];
 
-          let y1 = y + delta;
-          let detour1 = { x: x, y: y1 };
-          if (this.isValidPosition(detour1, path)) {
-            detours.push(detour1);
-          }
+      let detours = [];
 
-          let y2 = y - delta;
-          let detour2 = { x: x, y: y2 };
-          if (this.isValidPosition(detour2, path)) {
-            detours.push(detour2);
-          }
+      let detour1 = this.findClosestMidSpace(mid, m2, b2, path, true);
+      if (detour1) {
+        console.log(`d1 - ${detour1.x},${detour1.y}`);
+      }
+      if (detour1 && (!seen[detour1.x] || !seen[detour1.x][detour1.y])) {
+        detours.push(detour1);
+      }
 
-          if (detours.length > 0) {
-            let rand = Math.floor(Math.random() * detours.length);
-            let ret = detours[rand];
-            return ret;
-          }
+      let detour2 = this.findClosestMidSpace(mid, m2, b2, path, false);
+      if (detour2) {
+        console.log(`d2 - ${detour2.x},${detour2.y}`);
+      }
+      if (detour2 && (!seen[detour2.x] || !seen[detour2.x][detour2.y])) {
+        detours.push(detour2);
+      }
+
+
+      if (detours.length > 0) {
+        return detours.reduce((closest, detour) => {
+          let numSpaces1 = this.findSpacesBetween(closest, mid);
+          let numSpaces2 = this.findSpacesBetween(detour, mid);
+          return numSpaces2 < numSpaces1 ? detour : closest;
+        });
+      }
+
+      // if (m2 === undefined) {
+      //   let y = Math.floor(mid.y);
+      //   for (let delta=0; delta<10; delta++) {
+      //     let detours = [];
+      //
+      //     let y1 = y + delta;
+      //     let detour1 = { x: x, y: y1 };
+      //     if (this.isValidPosition(detour1, path)) {
+      //       detours.push(detour1);
+      //     }
+      //
+      //     let y2 = y - delta;
+      //     let detour2 = { x: x, y: y2 };
+      //     if (this.isValidPosition(detour2, path)) {
+      //       detours.push(detour2);
+      //     }
+      //
+      //     if (detours.length > 0) {
+      //       let rand = Math.floor(Math.random() * detours.length);
+      //       let ret = detours[rand];
+      //       return ret;
+      //     }
+      //   }
+      // } else {
+      //   let b2 = mid.y - (m2 * mid.x);
+      //   // let detour1 = this.findClosestMidSpace()
+      //   for (let delta=0; delta<10; delta+=0.1) {
+      //     let detours = [];
+      //     // let candidates = [];
+      //
+      //     let x1 = x + delta;
+      //     let detour1 = { x: Math.floor(x1), y: Math.floor((m2 * x1) + b2) };
+      //     // candidates.push(detour1);
+      //     // console.log(detour1);
+      //     if (this.isValidPosition(detour1, path)) {
+      //       detours.push(detour1);
+      //     }
+      //
+      //     let x2 = x - delta;
+      //     let detour2 = { x: Math.floor(x2), y: Math.floor((m2 * x2) + b2) };
+      //     // candidates.push(detour2);
+      //     // console.log(detour2);
+      //     if (this.isValidPosition(detour2, path)) {
+      //       detours.push(detour2);
+      //     }
+      //
+      //     // console.log('===============');
+      //     // console.log(candidates);
+      //     // console.log(detours);
+      //     if (detours.length > 0) {
+      //       let rand = Math.floor(Math.random() * detours.length);
+      //       let ret = detours[rand];
+      //       return ret;
+      //     }
+      //   }
+      // }
+      return null;
+    },
+    findClosestMidSpace (mid, m, b, path, positive) {
+      let x = Math.floor(mid.x);
+      for (let delta=0; delta<24; delta+=0.1) {
+        let midSpace = null;
+        if (m === undefined) {
+          let dy = Math.floor(mid.y) + (delta * (positive ? 1 : -1));
+          midSpace = { x: x, y: Math.floor(dy) };
+          // console.log(`midspace -> ${midSpace.x},${midSpace.y}`);
+        } else {
+          let dx = x + (delta * (positive ? 1 : -1));
+          midSpace = { x: Math.floor(dx), y: Math.floor((m * dx) + b) };
         }
-      } else {
-        let b2 = mid.y - (m2 * mid.x);
-        for (let delta=0; delta<10; delta+=0.1) {
-          let detours = [];
-
-          let x1 = x + delta;
-          let detour1 = { x: Math.floor(x1), y: Math.floor((m2 * x1) + b2) };
-          if (this.isValidPosition(detour1, path)) {
-            detours.push(detour1);
-          }
-
-          let x2 = x - delta;
-          let detour2 = { x: Math.floor(x2), y: Math.floor((m2 * x2) + b2) };
-          if (this.isValidPosition(detour2, path) && detour2.y < 20) {
-            detours.push(detour2);
-          }
-
-          if (detours.length > 0) {
-            let rand = Math.floor(Math.random() * detours.length);
-            let ret = detours[rand];
-            return ret;
-          }
+        if (this.isValidPosition(midSpace, path)) {
+          return midSpace;
         }
       }
       return null;
