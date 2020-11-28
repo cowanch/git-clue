@@ -36,7 +36,6 @@ class CpuEasy extends Cpu {
 
   // This method will return what the next move for the player will be
   getNextMove (phase) {
-    // For now, we will just cover the roll moves
     if (phase === phases.ROLL || phase === phases.ROLL_OR_SUGGEST) {
       if (roomNames.includes(this.targetPath[0]) && this.targetPath.length === 2) {
         return {

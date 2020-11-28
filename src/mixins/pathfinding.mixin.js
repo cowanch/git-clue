@@ -316,13 +316,13 @@ export default {
           let detours = [];
 
           let x1 = x + delta;
-          let detour1 = { x: Math.floor(x1), y: Math.floor((m2*(x1))+b2) };
+          let detour1 = { x: Math.floor(x1), y: Math.floor((m2 * x1) + b2) };
           if (this.isValidPosition(detour1, path)) {
             detours.push(detour1);
           }
 
           let x2 = x - delta;
-          let detour2 = { x: Math.floor(x2), y: Math.floor((m2*(x2))+b2) };
+          let detour2 = { x: Math.floor(x2), y: Math.floor((m2 * x2) + b2) };
           if (this.isValidPosition(detour2, path) && detour2.y < 20) {
             detours.push(detour2);
           }

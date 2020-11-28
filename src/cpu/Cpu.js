@@ -41,12 +41,12 @@ class Cpu {
   }
 
   // Get a list of suspects that have the provided state across all players in the notepad
-  getSuspectsOfState (player, state) {
+  getSuspectsOfState (state) {
     return Object.keys(deck.suspects).filter(suspect => Object.keys(this.notepad).some(player => this.getNotepadState(player, suspect) === state));
   }
 
   // Get a list of weapons that have the provided state across all players in the notepad
-  getWeaponsOfState (player, state) {
+  getWeaponsOfState (state) {
     return Object.keys(deck.weapons).filter(weapon => Object.keys(this.notepad).some(player => this.getNotepadState(player, weapon) === state));
   }
 
@@ -59,7 +59,7 @@ class Cpu {
     this.availableMoves = moves;
   }
 
-  startRollPhase () {}
+  startTurn () {}
 }
 
 export default Cpu;
