@@ -13,12 +13,12 @@
                      @finish="selectingPlayers=false"/>
       <player-panel v-else
                     :cards="playerCards[humanPlayer]"
+                    :messages="messages"
+                    :player-won="hasPlayerWon"
                     :card-selection="cardSelection"
                     :turn-phase="turnPhase"
                     :player-position="this.turnPlayerPosition"
-                    :messages="messages"
                     :game-over="playerGameOver[this.turnPlayer]"
-                    :player-won="hasPlayerWon"
                     :is-human-turn="isHumanPlayer(this.turnPlayer)"
                     :cpu-action="cpuAction"
                     @die-rolled="rollPhase"
