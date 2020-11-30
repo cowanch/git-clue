@@ -140,7 +140,7 @@ export default {
       if (!failed) {
         failed = {};
       } else {
-        if (failed[position.x] && failed[position.x][position.y]) {
+        if (this.doesObjectContainCoordinate(failed, position)) {
           return undefined;
         }
       }
@@ -152,40 +152,30 @@ export default {
         return undefined;
       }
       let nextSpace;
-      if (!failed[doorSpace.x] || !failed[doorSpace.x][doorSpace.y]) {
+      if (!this.doesObjectContainCoordinate(failed, doorSpace)) {
         nextSpace = this.findPathToTargetDoor(position, doorSpace, room, path, failed);
       }
       if (nextSpace === undefined) {
-        if (!failed.hasOwnProperty(doorSpace.x)) {
-          failed[doorSpace.x] = {};
-        }
-        failed[doorSpace.x][doorSpace.y] = true;
+        this.addCoordinateToObject(failed, doorSpace);
         // Try the other possible doors
         for (let door of this.doorSpaces[room]) {
           if (!this.coordinatesEqual(door, doorSpace)) {
-            if (!failed[door.x] || !failed[door.x][door.y]) {
+            if (!this.doesObjectContainCoordinate(failed, door)) {
               nextSpace = this.findPathToTargetDoor(position, door, room, path, failed);
             }
             if (nextSpace !== undefined) {
               return nextSpace;
             }
-            if (!failed.hasOwnProperty(door.x)) {
-              failed[door.x] = {};
-            }
-            failed[door.x][door.y] = true;
+            this.addCoordinateToObject(failed, door);
           }
         }
         // Could not generate a viable path to any doors of the target room
-        if (!failed.hasOwnProperty(position.x)) {
-          failed[position.x] = {};
-        }
-        failed[position.x][position.y] = true;
+        this.addCoordinateToObject(failed, position);
         return undefined;
       }
       return nextSpace;
     },
     findPathToTargetDoor (position, doorSpace, room, path, failed) {
-      // let targetSpace = null;
       let targetList = [doorSpace];
       // If the target space is the same as this position, we have reached the end of the path
       if (this.coordinatesEqual(position, doorSpace) || position === null) {
@@ -198,30 +188,27 @@ export default {
         if (!nextSpace) {
           return undefined;
         }
-        return this.findPathToTarget(nextSpace, room, path.slice(), Object.assign({}, failed));
+        return this.findPathToTarget(nextSpace, room, path.slice(), Object.assign({},failed));
       }
     },
     findNextSpaceFromTargetList (position, targetList, doorSpace, room, path, seen, failed) {
       let nextSpace = null;
       for (let t=0; t<targetList.length; t++) {
         let targetSpace = targetList[t];
-        if (!seen.hasOwnProperty(targetSpace.x)) {
-          seen[targetSpace.x] = {};
-        }
-        seen[targetSpace.x][targetSpace.y] = true;
+        this.addCoordinateToObject(seen, targetSpace);
         nextSpace = this.findSpaceInUnbrokenPath(position, targetSpace, path, doorSpace);
         if (nextSpace && nextSpace.length === 2) {
-          if (!failed[nextSpace[0].x] || !failed[nextSpace[0].x][nextSpace[0].y]) {
+          if (!this.doesObjectContainCoordinate(failed, nextSpace[0])) {
             nextSpace = nextSpace[0];
             break;
-          } else if (!failed[nextSpace[1].x] || !failed[nextSpace[1].x][nextSpace[1].y]) {
+          } else if (!this.doesObjectContainCoordinate(failed, nextSpace[1])) {
             nextSpace = nextSpace[1];
             break;
           } else {
             nextSpace = null;
           }
         }
-        if (nextSpace && (!failed[nextSpace.x] || !failed[nextSpace.x][nextSpace.y])) {
+        if (nextSpace && (!this.doesObjectContainCoordinate(failed, nextSpace))) {
           break;
         }
         nextSpace = null;
@@ -381,11 +368,11 @@ export default {
       let b2 = mid.y - (m2 * mid.x);
       let detours = [];
       let detour1 = this.findClosestMidSpace(mid, m2, b2, path, true);
-      if (detour1 && (!seen[detour1.x] || !seen[detour1.x][detour1.y])) {
+      if (detour1 && (!this.doesObjectContainCoordinate(seen, detour1))) {
         detours.push(detour1);
       }
       let detour2 = this.findClosestMidSpace(mid, m2, b2, path, false);
-      if (detour2 && (!seen[detour2.x] || !seen[detour2.x][detour2.y]) && !this.coordinatesEqual(detour1, detour2)) {
+      if (detour2 && !this.coordinatesEqual(detour1, detour2) && !this.doesObjectContainCoordinate(seen, detour2)) {
         detours.push(detour2);
       }
       if (detours.length === 2) {

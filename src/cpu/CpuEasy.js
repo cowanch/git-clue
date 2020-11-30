@@ -7,7 +7,6 @@ class CpuEasy extends Cpu {
   startTurn (roomPaths, phase) {
     // Find the closest room that hasn't been disproven
     this.targetPath = null;
-    console.log(roomPaths);
     let disprovedRooms = this.getRoomsOfState(notepadStates.DISPROVED);
     // Filter out paths that are inaccessible and rooms that this player is already in
     let filteredRoomPaths = Object.keys(roomPaths).filter(room => roomPaths[room] !== undefined);
