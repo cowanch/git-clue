@@ -153,6 +153,7 @@ export default {
       this.$set(this.playerCards, player, []);
       this.$set(this.playerGameOver, player, false);
     });
+    this.playerSelections['scarlet'] = playerTypes.DISABLED;
     this.playerSelections['mustard'] = playerTypes.DISABLED;
     // this.playerSelections['white'] = playerTypes.DISABLED;
     let roomKeys = Object.keys(this.rooms);
