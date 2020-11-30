@@ -43,16 +43,18 @@ export default {
     // Adds a coordinate to a provided object
     addCoordinateToObject (obj, coord) {
       if (this.isCoordinates(coord)) {
-        if (!obj.hasOwnProperty(coord.x)) {
-          obj[coord.x] = {};
+        let { x, y } = coord;
+        if (!obj.hasOwnProperty(x)) {
+          obj[x] = {};
         }
-        obj[coord.x][coord.y] = true;
+        obj[x][y] = true;
       }
     },
     // Checks if an object contains a coordinate
     doesObjectContainCoordinate (obj, coord) {
       if (this.isCoordinates(coord)) {
-        return obj[coord.x] && obj[coord.x][coord.y];
+        let { x, y } = coord;
+        return obj[x] && obj[x][y];
       }
       return false;
     }

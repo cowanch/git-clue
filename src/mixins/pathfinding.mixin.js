@@ -63,11 +63,7 @@ export default {
     addNextMove (position, path, remaining, availableMoves) {
       if (remaining === 0) {
         // End of our recursive chain
-        let { x, y } = position;
-        if (!availableMoves.hasOwnProperty(x)) {
-          availableMoves[x] = {};
-        }
-        availableMoves[x][y] = true;
+        this.addCoordinateToObject(availableMoves, position);
       } else {
         // Neighbours
         this.getSpaceNeighbours(position).forEach(neighbour => {
