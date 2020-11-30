@@ -32,6 +32,7 @@ class CpuEasy extends Cpu {
           return closest;
         });
         this.targetPath = roomPaths[closestRoom];
+        this.targetPath = roomPaths['hall'];
       }
     }
     return this.getNextMove(phase);
