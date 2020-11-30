@@ -135,14 +135,13 @@ export default {
       // If no door space can be found, the room we are in is likely being blocked. Therefore no path can be made
       return undefined;
     },
-    // Find the next space on the shortest path to a target room
+    // Find the shortest path to a target room
     findPathToTarget (position, room, path, failed) {
+      // The failed object keeps track of what positions / door spaces have been tried and failed
       if (!failed) {
         failed = {};
-      } else {
-        if (this.doesObjectContainCoordinate(failed, position)) {
-          return undefined;
-        }
+      } else if (this.doesObjectContainCoordinate(failed, position)) {
+        return undefined;
       }
       // Find the current closest door
       path.push(position);
@@ -175,28 +174,33 @@ export default {
       }
       return nextSpace;
     },
+    // Find the shortest path to a target door to a room
     findPathToTargetDoor (position, doorSpace, room, path, failed) {
-      let targetList = [doorSpace];
       // If the target space is the same as this position, we have reached the end of the path
       if (this.coordinatesEqual(position, doorSpace) || position === null) {
         path.push(room);
         return path;
       } else {
-        let nextSpace = null;
         let seen = {};
-        nextSpace = this.findNextSpaceFromTargetList(position, targetList, doorSpace, room, path, seen, failed);
+        let targetList = [doorSpace];
+        let nextSpace = this.findNextSpaceFromTargetList(position, targetList, doorSpace, room, path, seen, failed);
         if (!nextSpace) {
           return undefined;
         }
+        // Space was found, continue creating the path from this point
+        // Make copies of the path and failed in case this returns undefined and we need to backtrack to an earlier space
         return this.findPathToTarget(nextSpace, room, path.slice(), Object.assign({},failed));
       }
     },
+    // Find the next space on a path to the target room, either directly or by exploring detours
     findNextSpaceFromTargetList (position, targetList, doorSpace, room, path, seen, failed) {
       let nextSpace = null;
       for (let t=0; t<targetList.length; t++) {
         let targetSpace = targetList[t];
         this.addCoordinateToObject(seen, targetSpace);
+        // Try finding a direct, unbroken path to the target space
         nextSpace = this.findSpaceInUnbrokenPath(position, targetSpace, path, doorSpace);
+        // If multiple paths are found, choose a path space that hasn't failed yet
         if (nextSpace && nextSpace.length === 2) {
           if (!this.doesObjectContainCoordinate(failed, nextSpace[0])) {
             nextSpace = nextSpace[0];
@@ -213,6 +217,7 @@ export default {
         }
         nextSpace = null;
       }
+      // If no space was found, try again using detour spaces
       if (!nextSpace) {
         let list = [];
         for (let t=0; t<targetList.length; t++) {

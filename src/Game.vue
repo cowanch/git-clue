@@ -127,19 +127,6 @@ export default {
         } else if (this.isRollPhase(this.turnPhase)) {
           availableMoves = this.checkSecretPassages(this.turnPlayerPosition);
         }
-      } else if (this.isCpuPlayer(this.turnPlayer)) {
-        // availableMoves = this.turnCpuPlayer.targetPath;
-        if (this.turnCpuPlayer.targetPath) {
-          this.turnCpuPlayer.targetPath.forEach(pos => {
-            if (pos.x && pos.y) {
-              if (!availableMoves[pos.x]) {
-                availableMoves[pos.x] = {};
-              }
-              availableMoves[pos.x][pos.y] = true;
-            }
-          });
-        }
-
       }
       return availableMoves;
     }
