@@ -3,10 +3,13 @@
 **/
 export const actions = {
   ROLL: 'roll',
+  SUGGEST: 'suggest',
   PASSAGE: 'passage',
+  ACCUSE: 'accuse',
   END: 'end'
 };
 
 export const notepadStates = {
-  DISPROVED: 'disproved'
+  DISPROVED: 'disproved',
+  PROVED: 'proved'
 };

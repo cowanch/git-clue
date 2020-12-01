@@ -224,11 +224,18 @@ export default {
         let disprovingCards = this.getDisprovingCards(cards, suggestion);
         if (disprovingCards.length > 0) {
           disproved = true;
+          this.turnPhase = this.phases.DISPROVE;
           this.addMessage(`${this.suspects[currentPlayer]} can disprove the suggestion`);
+          if (this.isCpuPlayer(this.turnPlayer)) {
+            this.turnCpuPlayer.recordDisproving(currentPlayer, true);
+          }
           this.handleDisprovingCards(currentPlayer, disprovingCards);
           break;
         } else {
           this.addMessage(`${this.suspects[currentPlayer]} cannot disprove the suggestion`);
+          if (this.isCpuPlayer(this.turnPlayer)) {
+            this.turnCpuPlayer.recordDisproving(currentPlayer, false);
+          }
         }
         turnIter = (turnIter + 1) % this.turnOrder.length;
       }
@@ -250,16 +257,18 @@ export default {
       }
     },
     handleDisprovingCards (player, cards) {
-      if (this.isHumanPlayer(player)) {
-        this.turnPhase = this.phases.DISPROVE;
-        this.cardSelection = cards;
-      } else if (this.isCpuPlayer(player)) {
-        let rand = Math.floor(Math.random() * cards.length);
-        let card = cards[rand];
-        if (this.isHumanPlayer(this.turnPlayer)) {
-          this.addMessage(`${this.suspects[player]} reveals ${this.getCardText(card)}`);
+      if (this.turnPhase === this.phases.DISPROVE) {
+        if (this.isHumanPlayer(player)) {
+          this.cardSelection = cards;
+        } else if (this.isCpuPlayer(player)) {
+          let card = this.cpuPlayers[player].chooseCardToReveal(cards);
+          if (this.isHumanPlayer(this.turnPlayer)) {
+            this.addMessage(`${this.suspects[player]} reveals ${this.getCardText(card)}`);
+          } else if (this.isCpuPlayer(this.turnPlayer)) {
+            this.turnCpuPlayer.recordRevealedCard(player, card);
+          }
+          this.turnPhase = this.phases.END;
         }
-        this.turnPhase = this.phases.END;
       }
     },
     getDisprovingCards (cards, suggestion) {
@@ -292,6 +301,9 @@ export default {
     endTurn () {
       this.clearMessages();
       this.turnPlayerLastPosition = this.turnPlayerPosition;
+      if (this.isCpuPlayer(this.turnPlayer)) {
+        this.turnCpuPlayer.resetSuggestion();
+      }
       this.currentTurn++;
     },
     suggestOptionsShown (shown) {
@@ -400,6 +412,7 @@ export default {
         this.addMessage('Make a suggestion');
       }
       if (this.isCpuPlayer(this.turnPlayer)) {
+        this.turnCpuPlayer.setCoordinates(this.playerCoordinates[this.turnPlayer]);
         this.cpuAction = this.turnCpuPlayer.getNextMove(phase);
       }
     }

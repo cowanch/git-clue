@@ -153,17 +153,23 @@ export default {
     },
     makeSuggestion () {
       if (this.suggestionReady) {
-        this.$emit('suggest', {
+        this.emitSuggestion({
           suspect: this.suggestion.suspect,
           weapon: this.suggestion.weapon,
           room: this.playerRoom
         });
       }
     },
+    emitSuggestion (suggestion) {
+      this.$emit('suggest', suggestion);
+    },
     makeAccusation () {
       if (this.accusationReady) {
-        this.$emit('accuse', this.accusation);
+        this.emitAccusation(this.accusation);
       }
+    },
+    emitAccusation (accusation) {
+      this.$emit('accuse', accusation);
     },
     disprove (card) {
       this.$emit('disprove', card);
@@ -171,6 +177,10 @@ export default {
     handleCpuNext () {
       if (this.cpuAction.action === actions.ROLL) {
         this.rollDie();
+      } else if (this.cpuAction.action === actions.SUGGEST) {
+        this.emitSuggestion(this.cpuAction.suggestion);
+      } else if (this.cpuAction.action === actions.ACCUSE) {
+        this.emitAccusation(this.cpuAction.accusation);
       } else if (this.cpuAction.action === actions.END) {
         this.endTurn();
       } else {

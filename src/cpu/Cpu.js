@@ -9,12 +9,27 @@ class Cpu {
     this.notepad = {};
     this.availableMoves = {};
     this.targetPath = null;
+    this.roomPaths = null;
+    this.suggestionDisproved = {};
+    this.suggestion = {
+      suspect: '',
+      weapon: '',
+      room: ''
+    };
+    this.accusation = {
+      suspect: '',
+      weapon: '',
+      room: ''
+    };
     // Build the notepad for this player
     players.forEach(player => {
       this.notepad[player] = {};
       Object.keys(deck.suspects).forEach(suspect => this.notepad[player][suspect] = '');
       Object.keys(deck.weapons).forEach(weapon => this.notepad[player][weapon] = '');
       Object.keys(deck.rooms).forEach(room => this.notepad[player][room] = '');
+      if (player !== this.myPlayer) {
+        this.suggestionDisproved[player] = '';
+      }
     });
     // Mark each card as disproved in the notepad
     this.cards.forEach(card => this.setNotepadState(this.myPlayer, card, notepadStates.DISPROVED));
@@ -40,6 +55,14 @@ class Cpu {
     }
   }
 
+  resetNotepadState (clue) {
+    Object.keys(this.notepad).forEach(player => {
+      if (this.notepadContains(player, clue)) {
+        this.setNotepadState(player, clue, '');
+      }
+    });
+  }
+
   // Get a list of suspects that have the provided state across all players in the notepad
   getSuspectsOfState (state) {
     return Object.keys(deck.suspects).filter(suspect => Object.keys(this.notepad).some(player => this.getNotepadState(player, suspect) === state));
@@ -59,7 +82,41 @@ class Cpu {
     this.availableMoves = moves;
   }
 
+  setCoordinates (coords) {
+    this.coordinates = coords;
+  }
+
   startTurn () {}
+
+  chooseCardToReveal () {}
+
+  recordRevealedCard (player, card) {
+    this.setNotepadState(player, card, notepadStates.DISPROVED);
+    this.evaluateNotepad();
+  }
+
+  // Check to see if any entries can be considered proven yet
+  evaluateNotepad () {}
+
+  canAccuse () {
+    return !!this.accusation.suspect && !!this.accusation.weapon && !!this.accusation.room;
+  }
+
+  recordDisproving () {}
+
+  resetSuggestion () {
+    this.suggestion.suspect = '';
+    this.suggestion.weapon = '';
+    this.suggestion.room = '';
+    Object.keys(this.suggestionDisproved).forEach(player => {
+      this.suggestionDisproved[player] = '';
+    });
+  }
+
+  // Checks if all players were unable to disprove the suggestion
+  checkSuggestionDisproved () {
+    return Object.values(this.suggestionDisproved).every(disproved => disproved === false);
+  }
 }
 
 export default Cpu;
