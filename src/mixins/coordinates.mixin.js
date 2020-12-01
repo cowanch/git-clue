@@ -39,6 +39,24 @@ export default {
         return hSpaces + vSpaces;
       }
       return null;
+    },
+    // Adds a coordinate to a provided object
+    addCoordinateToObject (obj, coord) {
+      if (this.isCoordinates(coord)) {
+        let { x, y } = coord;
+        if (!obj.hasOwnProperty(x)) {
+          obj[x] = {};
+        }
+        obj[x][y] = true;
+      }
+    },
+    // Checks if an object contains a coordinate
+    doesObjectContainCoordinate (obj, coord) {
+      if (this.isCoordinates(coord)) {
+        let { x, y } = coord;
+        return obj[x] && obj[x][y];
+      }
+      return false;
     }
   }
 };

@@ -19,7 +19,11 @@ export default {
       // - it exists in the grid map
       // - another token is not occupying it
       // - the move position does not exist in the path
-      return this.isPositionOnBoard(position) && !this.isPositionOnPath(position, path) && !this.isPlayerOnPosition(position);
+      return this.isPositionAvailable(position) && !this.isPositionOnPath(position, path);
+    },
+    // Checks if a provided position is on the board and unoccupied
+    isPositionAvailable (position) {
+      return this.isPositionOnBoard(position) && !this.isPlayerOnPosition(position);
     },
     // Checks if the passed in position is in the passed in path
     isPositionOnPath (position, path) {
@@ -59,11 +63,7 @@ export default {
     addNextMove (position, path, remaining, availableMoves) {
       if (remaining === 0) {
         // End of our recursive chain
-        let { x, y } = position;
-        if (!availableMoves.hasOwnProperty(x)) {
-          availableMoves[x] = {};
-        }
-        availableMoves[x][y] = true;
+        this.addCoordinateToObject(availableMoves, position);
       } else {
         // Neighbours
         this.getSpaceNeighbours(position).forEach(neighbour => {
@@ -96,78 +96,177 @@ export default {
     },
     // Finds the shortest path from a position to a room
     findShortestPathToRoom (start, room) {
-      return this.findNextSpaceToTarget(start, room, []);
+      return this.findPathToTarget(start, room, []);
     },
     // Finds the shortest path from one room to another
     findShortestPathToRoomFromRoom (startRoom, room) {
       if (startRoom === room) {
-        return [];
+        return undefined;
       }
-      let startingDoors = this.doorSpaces[startRoom].filter(space => this.isValidPosition(space, []));
-      let start;
-      let lowest = 0;
-      startingDoors.forEach(door => {
-        let target = this.findClosestDoorSpace(door, room);
-        let numSpaces = this.findSpacesBetween(door, target);
-        if (!start || numSpaces < lowest) {
-          start = door;
-          lowest = numSpaces;
+      // Check for a trap door shortcut
+      if (this.isSecretPassageRoom(startRoom)) {
+        let secretPassageRoom = this.getSecretPassageRoom(startRoom);
+        if (secretPassageRoom === room) {
+          return [startRoom, secretPassageRoom];
         }
-      });
-      return this.findShortestPathToRoom(start, room);
+      }
+      // Otherwise, find the nearest door space and start from there
+      let startingDoors = this.doorSpaces[startRoom].filter(space => this.isPositionAvailable(space));
+      while (startingDoors.length > 0) {
+        let start = startingDoors.reduce((closest, door) => {
+          let target1 = this.findClosestDoorSpace(closest, room);
+          let numSpaces1 = this.findSpacesBetween(closest, target1);
+          let target2 = this.findClosestDoorSpace(door, room);
+          let numSpaces2 = this.findSpacesBetween(door, target2);
+          return numSpaces2 < numSpaces1 ? door : closest;
+        });
+        let pathToRoom = this.findPathToTarget(start, room, [startRoom]);
+        if (pathToRoom !== undefined) {
+          return pathToRoom;
+        } else {
+          // If a path cannot be made from the closest door, try the next closest
+          startingDoors = startingDoors.filter(door => door !== start);
+        }
+      }
+      // If no door space can be found, the room we are in is likely being blocked. Therefore no path can be made
+      return undefined;
     },
-    // Find the next space on the shortest path to a target room
-    findNextSpaceToTarget (position, room, path) {
+    // Find the shortest path to a target room
+    findPathToTarget (position, room, path, failed) {
+      // The failed object keeps track of what positions / door spaces have been tried and failed
+      if (!failed) {
+        failed = {};
+      } else if (this.doesObjectContainCoordinate(failed, position)) {
+        return undefined;
+      }
       // Find the current closest door
       path.push(position);
-      // console.log(position);
-      let targetSpace = this.findClosestDoorSpace(position, room);
+      let doorSpace = this.findClosestDoorSpace(position, room);
+      // If no door space can be found, the room we are going to is likely being blocked. Therefore no path can be made
+      if (!doorSpace) {
+        return undefined;
+      }
+      let nextSpace;
+      if (!this.doesObjectContainCoordinate(failed, doorSpace)) {
+        nextSpace = this.findPathToTargetDoor(position, doorSpace, room, path, failed);
+      }
+      if (nextSpace === undefined) {
+        this.addCoordinateToObject(failed, doorSpace);
+        // Try the other possible doors
+        for (let door of this.doorSpaces[room]) {
+          if (!this.coordinatesEqual(door, doorSpace)) {
+            if (!this.doesObjectContainCoordinate(failed, door)) {
+              nextSpace = this.findPathToTargetDoor(position, door, room, path, failed);
+            }
+            if (nextSpace !== undefined) {
+              return nextSpace;
+            }
+            this.addCoordinateToObject(failed, door);
+          }
+        }
+        // Could not generate a viable path to any doors of the target room
+        this.addCoordinateToObject(failed, position);
+        return undefined;
+      }
+      return nextSpace;
+    },
+    // Find the shortest path to a target door to a room
+    findPathToTargetDoor (position, doorSpace, room, path, failed) {
       // If the target space is the same as this position, we have reached the end of the path
-      if (this.coordinatesEqual(position, targetSpace)) {
+      if (this.coordinatesEqual(position, doorSpace) || position === null) {
+        path.push(room);
         return path;
       } else {
-        let nextSpace = this.findSpaceInUnbrokenPath(position, targetSpace, path);
+        let seen = {};
+        let targetList = [doorSpace];
+        let nextSpace = this.findNextSpaceFromTargetList(position, targetList, doorSpace, room, path, seen, failed);
         if (!nextSpace) {
-          // Need to find a detour
-          let detour = this.findDetourSpace(position, targetSpace, path);
-          if (!detour) {
-            return path;
-          }
-          let lowest = 0;
-          this.getSpaceNeighbours(position).forEach(space => {
-            if (this.isValidPosition(space, path)) {
-              let distance = this.findDistanceBetween(space, detour);
-              if (!nextSpace || distance < lowest) {
-                nextSpace = space;
-                lowest = distance;
-              }
-            }
-          });
+          return undefined;
         }
-        return this.findNextSpaceToTarget(nextSpace, room, path);
+        // Space was found, continue creating the path from this point
+        // Make copies of the path and failed in case this returns undefined and we need to backtrack to an earlier space
+        return this.findPathToTarget(nextSpace, room, path.slice(), Object.assign({},failed));
       }
+    },
+    // Find the next space on a path to the target room, either directly or by exploring detours
+    findNextSpaceFromTargetList (position, targetList, doorSpace, room, path, seen, failed) {
+      let nextSpace = null;
+      for (let t=0; t<targetList.length; t++) {
+        let targetSpace = targetList[t];
+        this.addCoordinateToObject(seen, targetSpace);
+        // Try finding a direct, unbroken path to the target space
+        nextSpace = this.findSpaceInUnbrokenPath(position, targetSpace, path, doorSpace);
+        // If multiple paths are found, choose a path space that hasn't failed yet
+        if (nextSpace && nextSpace.length === 2) {
+          if (!this.doesObjectContainCoordinate(failed, nextSpace[0])) {
+            nextSpace = nextSpace[0];
+            break;
+          } else if (!this.doesObjectContainCoordinate(failed, nextSpace[1])) {
+            nextSpace = nextSpace[1];
+            break;
+          } else {
+            nextSpace = null;
+          }
+        }
+        if (nextSpace && (!this.doesObjectContainCoordinate(failed, nextSpace))) {
+          break;
+        }
+        nextSpace = null;
+      }
+      // If no space was found, try again using detour spaces
+      if (!nextSpace) {
+        let list = [];
+        for (let t=0; t<targetList.length; t++) {
+          let spaces = this.findDetourSpaces(position, targetList[t], path, seen);
+          if (spaces && spaces.length > 0) {
+            list.push(...spaces);
+          }
+        }
+        // Organize by closest to the target door space
+        list.sort((s1, s2) => {
+          let numSpaces1 = this.findSpacesBetween(s1, doorSpace);
+          let numSpaces2 = this.findSpacesBetween(s2, doorSpace);
+          return numSpaces1 - numSpaces2;
+        });
+        if (list.length > 0) {
+          nextSpace = this.findNextSpaceFromTargetList(position, list, doorSpace, room, path, seen, failed);
+        }
+      }
+      if (nextSpace) {
+        return nextSpace;
+      }
+      return null;
     },
     // Given a position and a target room, find the door space with the least number of spaces to traverse
     // Sometimes a room will have more than one door, so knowing which door is closest can help build the shortest path
     findClosestDoorSpace (position, room) {
-      let lowest = 0;
-      let closestSpace = null;
-      this.doorSpaces[room].forEach(space => {
-        let spaces = this.findSpacesBetween(position, space);
-        if (!closestSpace || spaces < lowest) {
-          closestSpace = space;
-          lowest = spaces;
+      let closestSpace = this.doorSpaces[room].reduce((closest, space) => {
+        // If the number of spaces between is 0, this player is already on this door space
+        let spaces1 = this.findSpacesBetween(position, closest);
+        if (spaces1 === 0) {
+          return closest;
+        }
+        let spaces2 = this.findSpacesBetween(position, space);
+        if (spaces2 === 0) {
+          return space;
+        }
+        // Return the available space that is closest (or null if neither space is available)
+        if (this.isPositionAvailable(space) && spaces2 < spaces1) {
+          return space;
+        } else if (this.isPositionAvailable(closest)) {
+          return closest;
+        } else {
+          return null;
         }
       });
-      return closestSpace;
+      return this.isPositionAvailable(closestSpace) ? closestSpace : null;
     },
     // Try to find an unbroken path (horizontal then vertical or vice versa) and return the next space on that path
-    findSpaceInUnbrokenPath (start, target, path) {
+    findSpaceInUnbrokenPath (start, target, path, door) {
       // Make sure these aren't the same space
       if (this.coordinatesEqual(start, target)) {
         return target;
       }
-
       let { x, y } = start;
       if (start.x !== target.x) {
         x += ((start.x < target.x) ? 1 : -1);
@@ -177,7 +276,6 @@ export default {
       }
       let nextX = { x: x, y: start.y };
       let nextY = { x: start.x, y: y };
-
       // Check if can traverse x then y
       let xThenY = false;
       let directXPath = this.canDirectTraverseX(start, target, path);
@@ -190,7 +288,6 @@ export default {
       if (!directYPath && this.canTraverseY(start, target, path)) {
         yThenX = this.canDirectTraverseX({ x: start.x, y: target.y }, target, path);
       }
-
       let nextSpaces = [];
       if (xThenY || directXPath) {
         nextSpaces.push(nextX);
@@ -199,8 +296,19 @@ export default {
         nextSpaces.push(nextY);
       }
       if (nextSpaces.length > 0) {
-        let rand = Math.floor(Math.random() * nextSpaces.length);
-        return nextSpaces[rand];
+        if (nextSpaces.length === 2) {
+          let spacesToDoor1 = this.findSpacesBetween(nextSpaces[0], door);
+          let spacesToDoor2 = this.findSpacesBetween(nextSpaces[1], door);
+          if (spacesToDoor1 < spacesToDoor2) {
+            return nextSpaces[0];
+          } else if (spacesToDoor2 < spacesToDoor1) {
+            return nextSpaces[1];
+          } else {
+            // Return both, since one may not lead down a possible path
+            return nextSpaces
+          }
+        }
+        return nextSpaces[0];
       }
       return null;
     },
@@ -253,32 +361,46 @@ export default {
       return false;
     },
     // Find the closest space on the board that is perpendicular to the direct line between the start and target positions
-    findDetourSpace (start, target, path) {
+    findDetourSpaces (start, target, path, seen) {
       // Find the midpoint
       let mid = this.getMidpoint(start, target);
       let m1 = (start.y - target.y) / (start.x - target.x);
-      let m2 = (m1 === 0) ? 0 : -1 / m1;
+      let m2 = (m1 === 0) ? undefined : -1 / m1;
       let b2 = mid.y - (m2 * mid.x);
-      // With the perpendicular line, find the closest valid space
+      let detours = [];
+      let detour1 = this.findClosestMidSpace(mid, m2, b2, path, true);
+      if (detour1 && (!this.doesObjectContainCoordinate(seen, detour1))) {
+        detours.push(detour1);
+      }
+      let detour2 = this.findClosestMidSpace(mid, m2, b2, path, false);
+      if (detour2 && !this.coordinatesEqual(detour1, detour2) && !this.doesObjectContainCoordinate(seen, detour2)) {
+        detours.push(detour2);
+      }
+      if (detours.length === 2) {
+        return detours.sort((d1, d2) => {
+          let numSpaces1 = this.findSpacesBetween(d1, mid);
+          let numSpaces2 = this.findSpacesBetween(d2, mid);
+          return numSpaces1 - numSpaces2;
+        });
+      } else if (detours.length > 0) {
+        return detours;
+      }
+      return null;
+    },
+    findClosestMidSpace (mid, m, b, path, positive) {
       let x = Math.floor(mid.x);
-      for (let delta=0; delta<10; delta+=0.1) {
-        let detours = [];
-
-        let x1 = x + delta;
-        let detour1 = { x: Math.floor(x1), y: Math.floor((m2*(x1))+b2) };
-        if (this.isValidPosition(detour1, path)) {
-          detours.push(detour1);
+      for (let delta=0; delta<24; delta+=0.1) {
+        let midSpace = null;
+        // If the slope is undefined, return the nearest space with the same x value
+        if (m === undefined) {
+          let dy = Math.floor(mid.y) + (delta * (positive ? 1 : -1));
+          midSpace = { x: x, y: Math.floor(dy) };
+        } else {
+          let dx = x + (delta * (positive ? 1 : -1));
+          midSpace = { x: Math.floor(dx), y: Math.floor((m * dx) + b) };
         }
-
-        let x2 = x - delta;
-        let detour2 = { x: Math.floor(x2), y: Math.floor((m2*(x2))+b2) };
-        if (this.isValidPosition(detour2, path)) {
-          detours.push(detour2);
-        }
-
-        if (detours.length > 0) {
-          let rand = Math.floor(Math.random() * detours.length);
-          return detours[rand];
+        if (this.isValidPosition(midSpace, path)) {
+          return midSpace;
         }
       }
       return null;

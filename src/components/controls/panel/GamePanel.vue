@@ -22,7 +22,9 @@
           Make Accusation
         </button>
       </template>
-      <button v-else>
+      <button v-else
+              :disabled="!cpuAction"
+              @click="handleCpuNext">
         Next
       </button>
     </div>
@@ -69,6 +71,7 @@ import ClueOptions from '@/components/controls/panel/ClueOptions';
 import CardDisplay from '@/components/controls/panel/CardDisplay';
 import rooms from '@/mixins/rooms.mixin';
 import turnPhases from '@/mixins/turnPhases.mixin';
+import { actions } from '@/specs/cpuSpecs';
 
 const ROLLS = 5;
 
@@ -80,7 +83,8 @@ export default {
     playerPosition: [String, Object],
     cardSelection: Array,
     gameOver: Boolean,
-    isHumanTurn: Boolean
+    isHumanTurn: Boolean,
+    cpuAction: Object
   },
   data () {
     return {
@@ -163,6 +167,15 @@ export default {
     },
     disprove (card) {
       this.$emit('disprove', card);
+    },
+    handleCpuNext () {
+      if (this.cpuAction.action === actions.ROLL) {
+        this.rollDie();
+      } else if (this.cpuAction.action === actions.END) {
+        this.endTurn();
+      } else {
+        this.$emit('cpu-next');
+      }
     }
   },
   watch: {

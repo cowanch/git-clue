@@ -1,31 +1,22 @@
 <template>
   <div>
     <div class="css-tab">
-      <button :class="getActiveTabClass('game')"
-              @click="setActiveTab('game')">
+      <button :class="getActiveTabClass(tabs.GAME)"
+              @click="setActiveTab(tabs.GAME)">
         Game
       </button>
-      <button :class="getActiveTabClass('notepad-cards')"
-              @click="setActiveTab('notepad-cards')">
+      <button :class="getActiveTabClass(tabs.NOTEPAD)"
+              @click="setActiveTab(tabs.NOTEPAD)">
         Notepad / Cards
       </button>
     </div>
     <game-panel v-if="!playerWon"
-                v-show="isTabOpen('game')"
-                class="css-panel"
-                :turn-phase="turnPhase"
-                :player-position="playerPosition"
-                :card-selection="cardSelection"
-                :game-over="gameOver"
-                :is-human-turn="isHumanTurn"
-                @disprove="card => $emit('disprove', card)"
-                @die-rolled="roll => $emit('die-rolled', roll)"
-                @end-turn="() => $emit('end-turn')"
-                @show-suggest-options="show => $emit('show-suggest-options', show)"
-                @suggest="suggestion => $emit('suggest', suggestion)"
-                @accuse="accusation => $emit('accuse', accusation)"/>
+                v-show="isTabOpen(tabs.GAME)"
+                v-bind="$attrs"
+                v-on="$listeners"
+                class="css-panel"/>
     <div class="css-notepad-and-cards"
-         v-show="isTabOpen('notepad-cards')">
+         v-show="isTabOpen(tabs.NOTEPAD)">
       <notepad class="css-panel"/>
       <card-display :cards="cards"
                     :gridView="true"/>
@@ -73,24 +64,27 @@ import CardDisplay from '@/components/controls/panel/CardDisplay';
 import Notepad from '@/components/controls/panel/Notepad';
 import GamePanel from '@/components/controls/panel/GamePanel';
 
+const TABS_ENUM = Object.freeze({
+  NOTEPAD: 'notepad-cards',
+  GAME: 'game'
+});
+
 export default {
   name: 'PlayerPanel',
   props: {
     cards: Array,
-    cardSelection: Array,
-    turnPhase: String,
-    playerPosition: [String, Object],
     messages: Array,
-    gameOver: Boolean,
-    playerWon: Boolean,
-    isHumanTurn: Boolean
+    playerWon: Boolean
   },
   data () {
     return {
-      openTab: 'notepad-cards'
+      openTab: ''
     };
   },
   computed: {
+    tabs () {
+      return TABS_ENUM;
+    },
     messagesString () {
       let text = '';
       if (this.messages) {
@@ -98,6 +92,9 @@ export default {
       }
       return text;
     }
+  },
+  created () {
+    this.openTab = this.tabs.NOTEPAD;
   },
   methods: {
     setActiveTab (id) {

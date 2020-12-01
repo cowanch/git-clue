@@ -13,19 +13,21 @@
                      @finish="selectingPlayers=false"/>
       <player-panel v-else
                     :cards="playerCards[humanPlayer]"
+                    :messages="messages"
+                    :player-won="hasPlayerWon"
                     :card-selection="cardSelection"
                     :turn-phase="turnPhase"
                     :player-position="this.turnPlayerPosition"
-                    :messages="messages"
                     :game-over="playerGameOver[this.turnPlayer]"
-                    :player-won="hasPlayerWon"
                     :is-human-turn="isHumanPlayer(this.turnPlayer)"
+                    :cpu-action="cpuAction"
                     @die-rolled="rollPhase"
                     @suggest="suggestPhase"
                     @accuse="accusePhase"
                     @end-turn="endTurn"
                     @show-suggest-options="suggestOptionsShown"
-                    @disprove="disprovePhase"/>
+                    @disprove="disprovePhase"
+                    @cpu-next="cpuNext"/>
     </div>
   </div>
 </template>
@@ -53,7 +55,8 @@ import PlayerSelect from '@/components/controls/PlayerSelect';
 import PlayerPanel from '@/components/controls/PlayerPanel';
 // Specs
 import startingPositions from '@/specs/startingPositions';
-import {playerTypes} from '@/specs/playerTypeSpecs';
+import { playerTypes } from '@/specs/playerTypeSpecs';
+import { actions } from '@/specs/cpuSpecs';
 // Utils
 import shuffle from '@/utils/shuffle';
 // Mixins
@@ -83,7 +86,8 @@ export default {
       turnPhase: null,
       messages: [],
       cardSelection: [],
-      cpuPlayers: {}
+      cpuPlayers: {},
+      cpuAction: null
     };
   },
   computed: {
@@ -102,6 +106,12 @@ export default {
     turnPlayerPosition () {
       return this.playerCoordinates[this.turnPlayer];
     },
+    turnCpuPlayer () {
+      if (this.isCpuPlayer(this.turnPlayer)) {
+        return this.cpuPlayers[this.turnPlayer];
+      }
+      return null;
+    },
     turnPlayerLastPosition: {
       get () { return this.lastTurnCoordinates[this.turnPlayer]; },
       set (coordinates) { this.lastTurnCoordinates[this.turnPlayer] = coordinates }
@@ -111,10 +121,12 @@ export default {
     },
     availableMoves () {
       let availableMoves = {};
-      if (this.dieRoll > 0) {
-        availableMoves = this.findAvailableMoves(this.turnPlayerPosition, this.dieRoll);
-      } else if (this.isRollPhase(this.turnPhase)) {
-        availableMoves = this.checkSecretPassages(this.turnPlayerPosition);
+      if (this.isHumanPlayer(this.turnPlayer)) {
+        if (this.dieRoll > 0) {
+          availableMoves = this.findAvailableMoves(this.turnPlayerPosition, this.dieRoll);
+        } else if (this.isRollPhase(this.turnPhase)) {
+          availableMoves = this.checkSecretPassages(this.turnPlayerPosition);
+        }
       }
       return availableMoves;
     }
@@ -164,7 +176,11 @@ export default {
     },
     rollPhase (roll) {
       if (this.isRollPhase(this.turnPhase)) {
-        this.dieRoll = roll;
+        if (this.isHumanPlayer(this.turnPlayer)) {
+          this.dieRoll = roll;
+        } else if (this.isCpuPlayer(this.turnPlayer)) {
+          this.turnCpuPlayer.setAvailableMoves(this.findAvailableMoves(this.turnPlayerPosition, roll));
+        }
         this.turnPhase = this.phases.MOVE;
       }
     },
@@ -283,6 +299,26 @@ export default {
         this.turnPhase = this.phases.SUGGEST;
       }
     },
+    cpuStart () {
+      if (this.isCpuPlayer(this.turnPlayer)) {
+        let paths = {};
+        if (!this.isValidRoom(this.turnPlayerPosition)) {
+          Object.keys(this.rooms).forEach(room => paths[room] = this.findShortestPathToRoom(this.turnPlayerPosition, room));
+        } else {
+          Object.keys(this.rooms).forEach(room => paths[room] = this.findShortestPathToRoomFromRoom(this.turnPlayerPosition, room));
+        }
+        this.cpuAction = this.turnCpuPlayer.startTurn(paths, this.turnPhase);
+      }
+    },
+    cpuNext () {
+      if (this.isCpuPlayer(this.turnPlayer)) {
+        if (this.cpuAction.action === actions.MOVE) {
+          this.movePhase(this.cpuAction.moveTo);
+        } else if (this.cpuAction.action === actions.PASSAGE) {
+          this.movePassage(this.cpuAction.moveTo);
+        }
+      }
+    },
     addSuggestionMessage (suggestion) {
       let {suspect, weapon, room} = suggestion;
       let suspectText = this.suspects[suspect];
@@ -321,12 +357,7 @@ export default {
           this.turnPhase = this.phases.ROLL;
         }
         if (this.isCpuPlayer(player)) {
-          let paths = {};
-          if (!this.isValidRoom(this.cpuPlayers[player].coordinates)) {
-            Object.keys(this.rooms).forEach(room => paths[room] = this.findShortestPathToRoom(this.cpuPlayers[player].coordinates, room));
-          } else {
-            Object.keys(this.rooms).forEach(room => paths[room] = this.findShortestPathToRoomFromRoom(this.cpuPlayers[player].coordinates, room));
-          }
+          this.cpuStart();
         }
       } else {
         this.endTurn();
@@ -346,7 +377,7 @@ export default {
         this.dealCardsToPlayers(deck);
         this.turnOrder.forEach(player => {
           if (this.isCpuPlayer(player)) {
-            this.cpuPlayers[player] = new CpuEasy(this.playerCards[player], this.playerCoordinates[player], this.turnOrder);
+            this.cpuPlayers[player] = new CpuEasy(player, this.playerCards[player], this.playerCoordinates[player], this.turnOrder);
           }
         });
         this.currentTurn = 0;
@@ -367,6 +398,9 @@ export default {
         this.addMessage(msg);
       } else if (phase === this.phases.SUGGEST) {
         this.addMessage('Make a suggestion');
+      }
+      if (this.isCpuPlayer(this.turnPlayer)) {
+        this.cpuAction = this.turnCpuPlayer.getNextMove(phase);
       }
     }
   },
