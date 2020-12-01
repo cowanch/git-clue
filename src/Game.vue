@@ -287,8 +287,10 @@ export default {
     },
     disprovePhase (card) {
       if (this.turnPhase === this.phases.DISPROVE) {
-        // Do something here handling CPU users receiving a clue
         this.cardSelection = [];
+        if (this.isCpuPlayer(this.turnPlayer)) {
+          this.turnCpuPlayer.recordRevealedCard(this.humanPlayer, card);
+        }
         this.addMessage(`${this.suspects[this.humanPlayer]} reveals ${this.getCardText(card)} to ${this.suspects[this.turnPlayer]}`);
         this.turnPhase = this.phases.END;
       }
