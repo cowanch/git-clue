@@ -9,8 +9,7 @@ class Cpu {
     this.notepad = {};
     this.availableMoves = {};
     this.targetPath = null;
-    this.roomPaths = null;
-    this.suggestionDisproved = {};
+    this.playerCanDisprove = {};
     this.suggestion = {
       suspect: '',
       weapon: '',
@@ -28,11 +27,11 @@ class Cpu {
       Object.keys(deck.weapons).forEach(weapon => this.notepad[player][weapon] = '');
       Object.keys(deck.rooms).forEach(room => this.notepad[player][room] = '');
       if (player !== this.myPlayer) {
-        this.suggestionDisproved[player] = '';
+        this.playerCanDisprove[player] = '';
       }
     });
     // Mark each card as disproved in the notepad
-    this.cards.forEach(card => this.setNotepadState(this.myPlayer, card, notepadStates.DISPROVED));
+    this.cards.forEach(card => this.setNotepadState(this.myPlayer, card, notepadStates.DISPROVEN));
   }
 
   // Checks if the notepad contains the provided player and clue
@@ -78,44 +77,52 @@ class Cpu {
     return Object.keys(deck.rooms).filter(room => Object.keys(this.notepad).some(player => this.getNotepadState(player, room) === state));
   }
 
+  // Sets available moves from a die roll to help choose a space to move to
   setAvailableMoves (moves) {
     this.availableMoves = moves;
   }
 
+  // Sets the current coordinates for this player to help with making suggestions
   setCoordinates (coords) {
     this.coordinates = coords;
   }
 
+  // The function that will call at the start of this player's turn
   startTurn () {}
 
+  // Choose one of this player's cards to reveal
   chooseCardToReveal () {}
 
+  // Record a revealed card on the notepad under the player who revealed it
   recordRevealedCard (player, card) {
-    this.setNotepadState(player, card, notepadStates.DISPROVED);
+    this.setNotepadState(player, card, notepadStates.DISPROVEN);
     this.evaluateNotepad();
   }
+
+  // Records whether a player can or cannot disprove this player's suggestion
+  recordPlayerCanDisprove () {}
 
   // Check to see if any entries can be considered proven yet
   evaluateNotepad () {}
 
+  // Returns whether or not this player is ready to accuse
   canAccuse () {
     return !!this.accusation.suspect && !!this.accusation.weapon && !!this.accusation.room;
   }
 
-  recordDisproving () {}
-
+  // Reset this player's suggestion and disproving players
   resetSuggestion () {
     this.suggestion.suspect = '';
     this.suggestion.weapon = '';
     this.suggestion.room = '';
-    Object.keys(this.suggestionDisproved).forEach(player => {
-      this.suggestionDisproved[player] = '';
+    Object.keys(this.playerCanDisprove).forEach(player => {
+      this.playerCanDisprove[player] = '';
     });
   }
 
   // Checks if all players were unable to disprove the suggestion
-  checkSuggestionDisproved () {
-    return Object.values(this.suggestionDisproved).every(disproved => disproved === false);
+  isSuggestionProven () {
+    return Object.values(this.playerCanDisprove).every(disproved => disproved === false);
   }
 }
 

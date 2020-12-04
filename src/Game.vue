@@ -222,20 +222,18 @@ export default {
         let currentPlayer = this.turnOrder[turnIter];
         let cards = this.playerCards[currentPlayer];
         let disprovingCards = this.getDisprovingCards(cards, suggestion);
-        if (disprovingCards.length > 0) {
+        let canDisprove = disprovingCards.length > 0;
+        if (this.isCpuPlayer(this.turnPlayer)) {
+          this.turnCpuPlayer.recordPlayerCanDisprove(currentPlayer, canDisprove);
+        }
+        if (canDisprove) {
           disproved = true;
           this.turnPhase = this.phases.DISPROVE;
           this.addMessage(`${this.suspects[currentPlayer]} can disprove the suggestion`);
-          if (this.isCpuPlayer(this.turnPlayer)) {
-            this.turnCpuPlayer.recordDisproving(currentPlayer, true);
-          }
           this.handleDisprovingCards(currentPlayer, disprovingCards);
           break;
         } else {
           this.addMessage(`${this.suspects[currentPlayer]} cannot disprove the suggestion`);
-          if (this.isCpuPlayer(this.turnPlayer)) {
-            this.turnCpuPlayer.recordDisproving(currentPlayer, false);
-          }
         }
         turnIter = (turnIter + 1) % this.turnOrder.length;
       }

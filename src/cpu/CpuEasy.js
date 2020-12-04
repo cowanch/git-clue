@@ -6,20 +6,19 @@ import { deck } from '@/specs/cardSpecs';
 
 class CpuEasy extends Cpu {
   startTurn (roomPaths, phase) {
-    this.roomPaths = roomPaths;
     // Find the closest room that hasn't been disproven
     this.targetPath = null;
-    let disprovedRooms = this.getRoomsOfState(notepadStates.DISPROVED);
+    let disprovenRooms = this.getRoomsOfState(notepadStates.DISPROVEN);
     // Filter out paths that are inaccessible and rooms that this player is already in
     let filteredRoomPaths = Object.keys(roomPaths).filter(room => roomPaths[room] !== undefined);
     if (filteredRoomPaths.length > 0) {
       // If there is only one path that is available (in the case that a corner room's door is blocked),
-      // take it even if the other room is disproved
+      // take it even if the other room is disproven
       if (filteredRoomPaths.length === 1) {
         this.targetPath = roomPaths[filteredRoomPaths[0]];
       } else {
         // Filter out paths to disproven rooms
-        filteredRoomPaths = filteredRoomPaths.filter(room => !disprovedRooms.includes(room));
+        filteredRoomPaths = filteredRoomPaths.filter(room => !disprovenRooms.includes(room));
         let closestRoom = filteredRoomPaths.reduce((closest, room) => {
           let closestSteps = roomPaths[closest].length;
           let steps = roomPaths[room].length;
@@ -55,7 +54,7 @@ class CpuEasy extends Cpu {
         };
       } else if (phase === phases.ROLL_OR_SUGGEST &&
                  roomNames.includes(this.coordinates) &&
-                 !this.getRoomsOfState(notepadStates.DISPROVED).includes(this.coordinates)) {
+                 !this.getRoomsOfState(notepadStates.DISPROVEN).includes(this.coordinates)) {
         this.makeSuggestion();
         return {
           action: actions.SUGGEST,
@@ -105,23 +104,23 @@ class CpuEasy extends Cpu {
   }
 
   chooseSuspectToSuggest () {
-    let provenSuspects = this.getSuspectsOfState(notepadStates.PROVED);
+    let provenSuspects = this.getSuspectsOfState(notepadStates.PROVEN);
     if (provenSuspects === 1) {
       return provenSuspects[0];
     }
-    let disprovedSuspects = this.getSuspectsOfState(notepadStates.DISPROVED);
-    let possibleSuspects = Object.keys(deck.suspects).filter(suspect => !disprovedSuspects.includes(suspect));
+    let disprovenSuspects = this.getSuspectsOfState(notepadStates.DISPROVEN);
+    let possibleSuspects = Object.keys(deck.suspects).filter(suspect => !disprovenSuspects.includes(suspect));
     let rand = Math.random() * possibleSuspects.length;
     return possibleSuspects[Math.floor(rand)];
   }
 
   chooseWeaponToSuggest () {
-    let provenWeapons = this.getWeaponsOfState(notepadStates.PROVED);
+    let provenWeapons = this.getWeaponsOfState(notepadStates.PROVEN);
     if (provenWeapons === 1) {
       return provenWeapons[0];
     }
-    let disprovedWeapons = this.getWeaponsOfState(notepadStates.DISPROVED);
-    let possibleWeapons = Object.keys(deck.weapons).filter(weapon => !disprovedWeapons.includes(weapon));
+    let disprovenWeapons = this.getWeaponsOfState(notepadStates.DISPROVEN);
+    let possibleWeapons = Object.keys(deck.weapons).filter(weapon => !disprovenWeapons.includes(weapon));
     let rand = Math.random() * possibleWeapons.length;
     return possibleWeapons[Math.floor(rand)];
   }
@@ -138,56 +137,57 @@ class CpuEasy extends Cpu {
   }
 
   evaluateSuspects () {
-    let provenSuspects = this.getSuspectsOfState(notepadStates.PROVED);
+    let provenSuspects = this.getSuspectsOfState(notepadStates.PROVEN);
     if (provenSuspects === 1) {
       return;
     } else if (provenSuspects > 1) {
-      // Should never have more than one proved suspect
+      // Should never have more than one proven suspect
       provenSuspects.forEach(suspect => this.resetNotepadState(suspect));
       this.accusation.suspect = '';
     }
-    let disprovedSuspects = this.getSuspectsOfState(notepadStates.DISPROVED);
-    let possibleSuspects = Object.keys(deck.suspects).filter(suspect => !disprovedSuspects.includes(suspect));
+    let disprovenSuspects = this.getSuspectsOfState(notepadStates.DISPROVEN);
+    let possibleSuspects = Object.keys(deck.suspects).filter(suspect => !disprovenSuspects.includes(suspect));
     if (possibleSuspects.length === 1) {
-      this.setNotepadState(this.myPlayer, possibleSuspects[0], notepadStates.PROVED);
+      this.setNotepadState(this.myPlayer, possibleSuspects[0], notepadStates.PROVEN);
       this.accusation.suspect = possibleSuspects[0];
     }
   }
 
   evaluateWeapons () {
-    let provenWeapons = this.getWeaponsOfState(notepadStates.PROVED);
+    let provenWeapons = this.getWeaponsOfState(notepadStates.PROVEN);
     if (provenWeapons === 1) {
       return;
     } else if (provenWeapons > 1) {
-      // Should never have more than one proved weapon
-      provenWeapons.forEach(suspect => this.resetNotepadState(suspect));
+      // Should never have more than one proven weapon
+      provenWeapons.forEach(weapon => this.resetNotepadState(weapon));
       this.accusation.weapon = '';
     }
-    let disprovedWeapons = this.getWeaponsOfState(notepadStates.DISPROVED);
-    let possibleWeapons = Object.keys(deck.suspects).filter(suspect => !disprovedWeapons.includes(suspect));
+    let disprovenWeapons = this.getWeaponsOfState(notepadStates.DISPROVEN);
+    let possibleWeapons = Object.keys(deck.weapons).filter(weapon => !disprovenWeapons.includes(weapon));
     if (possibleWeapons.length === 1) {
-      this.setNotepadState(this.myPlayer, possibleWeapons[0], notepadStates.PROVED);
+      this.setNotepadState(this.myPlayer, possibleWeapons[0], notepadStates.PROVEN);
       this.accusation.weapon = possibleWeapons[0];
     }
   }
 
   evaluateRooms () {
-    let provenRooms = this.getRoomsOfState(notepadStates.PROVED);
+    let provenRooms = this.getRoomsOfState(notepadStates.PROVEN);
     if (provenRooms === 1) {
       return;
     } else if (provenRooms > 1) {
-      // Should never have more than one proved room
-      provenRooms.forEach(suspect => this.resetNotepadState(suspect));
+      // Should never have more than one proven room
+      provenRooms.forEach(room => this.resetNotepadState(room));
       this.accusation.room = '';
     }
-    let disprovedRooms = this.getRoomsOfState(notepadStates.DISPROVED);
-    let possibleRooms = Object.keys(deck.suspects).filter(suspect => !disprovedRooms.includes(suspect));
+    let disprovenRooms = this.getRoomsOfState(notepadStates.DISPROVEN);
+    let possibleRooms = Object.keys(deck.rooms).filter(room => !disprovenRooms.includes(room));
     if (possibleRooms.length === 1) {
-      this.setNotepadState(this.myPlayer, possibleRooms[0], notepadStates.PROVED);
+      this.setNotepadState(this.myPlayer, possibleRooms[0], notepadStates.PROVEN);
       this.accusation.room = possibleRooms[0];
     }
   }
 
+  // Form a suggestion to be made
   makeSuggestion () {
     if (roomNames.includes(this.coordinates)) {
       this.suggestion.suspect = this.chooseSuspectToSuggest();
@@ -196,9 +196,10 @@ class CpuEasy extends Cpu {
     }
   }
 
-  recordDisproving (player, disproved) {
-    this.suggestionDisproved[player] = disproved;
-    if (this.checkSuggestionDisproved()) {
+  // Record whether a player can disprove this player's suggestion, and check if the suggestion is proven
+  recordPlayerCanDisprove (player, disproven) {
+    this.playerCanDisprove[player] = disproven;
+    if (this.isSuggestionProven()) {
       this.accusation.suspect = this.suggestion.suspect;
       this.accusation.weapon = this.suggestion.weapon;
       this.accusation.room = this.suggestion.room;

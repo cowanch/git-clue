@@ -10,6 +10,6 @@ export const actions = {
 };
 
 export const notepadStates = {
-  DISPROVED: 'disproved',
-  PROVED: 'proved'
+  DISPROVEN: 'disproven',
+  PROVEN: 'proven'
 };
