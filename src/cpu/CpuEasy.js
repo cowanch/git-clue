@@ -39,54 +39,82 @@ class CpuEasy extends Cpu {
 
   // This method will return what the next move for the player will be
   getNextMove (phase) {
+    // Roll phase (including suggestion)
     if (phase === phases.ROLL || phase === phases.ROLL_OR_SUGGEST) {
+      // If no target path could be chosen, either end the turn or make a suggestion
       if (this.targetPath === null) {
         if (phase === phases.ROLL) {
-          return { action: actions.END };
+          return this.endTurnAction();
         } else if (phase === phases.ROLL_OR_SUGGEST){
-          // TODO: If can't move but can still suggest, make a suggestion
-          return { action: actions.END };
+          this.suggestAction();
         }
+      // If the target path is one room directly to another, it's a secret passage move
       } else if (roomNames.includes(this.targetPath[0]) && this.targetPath.length === 2) {
-        return {
-          action: actions.PASSAGE,
-          moveTo: this.targetPath[1]
-        };
+        return this.passageAction(this.targetPath[1]);
+      // If the player is in a suggestion phase and in a room that is not disproven, make a suggestion
       } else if (phase === phases.ROLL_OR_SUGGEST &&
                  roomNames.includes(this.coordinates) &&
                  !this.getRoomsOfState(notepadStates.DISPROVEN).includes(this.coordinates)) {
-        this.makeSuggestion();
-        return {
-          action: actions.SUGGEST,
-          suggestion: this.suggestion
-        };
+        return this.suggestAction();
+      // Otherwise roll the dice
       } else {
-        return { action: actions.ROLL };
+        return this.rollAction();
       }
+    // Move phase
     } else if (phase === phases.MOVE) {
-      return {
-        action: actions.MOVE,
-        moveTo: this.chooseSpaceToMove()
-      };
+      return this.moveAction();
+    // Suggestion phase
     } else if (phase === phases.SUGGEST) {
       if (roomNames.includes(this.coordinates)) {
-        this.makeSuggestion();
-        return {
-          action: actions.SUGGEST,
-          suggestion: this.suggestion
-        };
+        return this.suggestAction();
       } else {
-        return { action: actions.END };
+        return this.endTurnAction();
       }
+    // End phase
     } else if (phase === phases.END) {
+      // Check if an accusation can be made
       if (this.canAccuse()) {
-        return {
-          action: actions.ACCUSE,
-          accusation: this.accusation
-        };
+        return this.accuseAction();
       }
-      return { action: actions.END };
+      return this.endTurnAction();
     }
+  }
+
+  rollAction () {
+    return { action: actions.ROLL };
+  }
+
+  passageAction (moveTo) {
+    return {
+      action: actions.PASSAGE,
+      moveTo: moveTo
+    };
+  }
+
+  moveAction () {
+    return {
+      action: actions.MOVE,
+      moveTo: this.chooseSpaceToMove()
+    };
+  }
+
+  suggestAction () {
+    this.makeSuggestion();
+    return {
+      action: actions.SUGGEST,
+      suggestion: this.suggestion
+    };
+  }
+
+  accuseAction () {
+    return {
+      action: actions.ACCUSE,
+      accusation: this.accusation
+    };
+  }
+
+  endTurnAction () {
+    return { action: actions.END };
   }
 
   chooseSpaceToMove () {
