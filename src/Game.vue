@@ -223,9 +223,8 @@ export default {
         let cards = this.playerCards[currentPlayer];
         let disprovingCards = this.getDisprovingCards(cards, suggestion);
         let canDisprove = disprovingCards.length > 0;
-        if (this.isCpuPlayer(this.turnPlayer)) {
-          this.turnCpuPlayer.recordPlayerCanDisprove(currentPlayer, canDisprove);
-        }
+        // CPU players witness disprovals
+        Object.values(this.cpuPlayers).forEach(cpu => cpu.witnessDisproval(currentPlayer, canDisprove, suggestion));
         if (canDisprove) {
           disproved = true;
           this.turnPhase = this.phases.DISPROVE;
@@ -301,9 +300,6 @@ export default {
     endTurn () {
       this.clearMessages();
       this.turnPlayerLastPosition = this.turnPlayerPosition;
-      if (this.isCpuPlayer(this.turnPlayer)) {
-        this.turnCpuPlayer.resetSuggestion();
-      }
       this.currentTurn++;
     },
     suggestOptionsShown (shown) {

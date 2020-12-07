@@ -10,6 +10,11 @@ export const actions = {
 };
 
 export const notepadStates = {
+  OWNED: 'owned',
+  NOT_OWNED: 'not_owned'
+};
+
+export const clueStates = {
   DISPROVEN: 'disproven',
   PROVEN: 'proven'
 };
