@@ -211,13 +211,6 @@ export default {
         this.showSuggestionOptions = false;
         this.showAccusationOptions = false;
       }
-    },
-    // DEBUGGING
-    cpuAction: {
-      deep: true,
-      handler () {
-        this.handleCpuNext();
-      }
     }
   },
   components: {
