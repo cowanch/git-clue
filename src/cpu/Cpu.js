@@ -129,7 +129,7 @@ class Cpu {
     return this.clueStates.hasOwnProperty(clue);
   }
 
-  //
+  // Get the overall state of a particular clue
   getClueState (clue) {
     if (this.isValidClue(clue)) {
       return this.clueStates[clue];
@@ -137,7 +137,7 @@ class Cpu {
     return null;
   }
 
-  //
+  // Set the overall state of a particular clue
   setClueState (clue, state) {
     if (this.isValidClue(clue)) {
       this.clueStates[clue] = state;
@@ -208,6 +208,7 @@ class Cpu {
     return !!suspect && !!weapon && !!room;
   }
 
+  // Check all disproven suspects, and if there is only 1 that is not, mark it as proven
   checkDisprovenSuspects () {
     let possibleSuspects = this.getSuspectsNotOfClueState(clueStates.DISPROVEN);
     if (possibleSuspects.length === 1) {
@@ -215,6 +216,7 @@ class Cpu {
     }
   }
 
+  // Check all disproven weapons, and if there is only 1 that is not, mark it as proven
   checkDisprovenWeapons () {
     let possibleWeapons = this.getWeaponsNotOfClueState(clueStates.DISPROVEN);
     if (possibleWeapons.length === 1) {
@@ -222,6 +224,7 @@ class Cpu {
     }
   }
 
+  // Check all disproven rooms, and if there is only 1 that is not, mark it as proven
   checkDisprovenRooms () {
     let possibleRooms = this.getRoomsNotOfClueState(clueStates.DISPROVEN);
     if (possibleRooms.length === 1) {
@@ -229,6 +232,7 @@ class Cpu {
     }
   }
 
+  // For each clue category: if a proven clue is found, mark it as the accusation
   updateAccusation () {
     let provenSuspects = this.getSuspectsOfClueState(clueStates.PROVEN);
     if (provenSuspects.length === 1) {
@@ -257,10 +261,12 @@ class Cpu {
   }
 
   // ========== ACTION FUNCTIONS ==========
+  // Return the roll action to the game
   rollAction () {
     return { action: actions.ROLL };
   }
 
+  // Return the passage action to the game
   passageAction (moveTo) {
     return {
       action: actions.PASSAGE,
@@ -268,6 +274,7 @@ class Cpu {
     };
   }
 
+  // Return the move action to the game
   moveAction () {
     return {
       action: actions.MOVE,
@@ -275,6 +282,7 @@ class Cpu {
     };
   }
 
+  // Return the suggest action to the game
   suggestAction () {
     return {
       action: actions.SUGGEST,
@@ -282,6 +290,7 @@ class Cpu {
     };
   }
 
+  // Return the accuse action to the game
   accuseAction () {
     return {
       action: actions.ACCUSE,
@@ -289,6 +298,7 @@ class Cpu {
     };
   }
 
+  // Return the end turn action to the game
   endTurnAction () {
     this.myTurn = false;
     return { action: actions.END };

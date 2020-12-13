@@ -52,14 +52,14 @@ class CpuEasy extends Cpu {
         } else if (phase === phases.ROLL_OR_SUGGEST){
           this.suggestAction();
         }
-      // If the target path is one room directly to another, it's a secret passage move
-      } else if (roomNames.includes(this.targetPath[0]) && this.targetPath.length === 2) {
-        return this.passageAction(this.targetPath[1]);
       // If the player is in a suggestion phase and in a room that is not disproven, make a suggestion
       } else if (phase === phases.ROLL_OR_SUGGEST &&
                  roomNames.includes(this.coordinates) &&
                  !this.getRoomsOfClueState(clueStates.DISPROVEN).includes(this.coordinates)) {
         return this.suggestAction();
+      // If the target path is one room directly to another, it's a secret passage move
+      } else if (roomNames.includes(this.targetPath[0]) && this.targetPath.length === 2) {
+        return this.passageAction(this.targetPath[1]);
       // Otherwise roll the dice
       } else {
         return this.rollAction();
@@ -99,9 +99,8 @@ class CpuEasy extends Cpu {
   }
 
   chooseSuspectToSuggest () {
-    let provenSuspects = this.getSuspectsOfClueState(clueStates.PROVEN);
-    if (provenSuspects.length === 1) {
-      return provenSuspects[0];
+    if (!!this.accusation.suspect) {
+      return this.accusation.suspect;
     }
     let possibleSuspects = this.getSuspectsNotOfClueState(clueStates.DISPROVEN);
     let rand = Math.random() * possibleSuspects.length;
@@ -109,9 +108,8 @@ class CpuEasy extends Cpu {
   }
 
   chooseWeaponToSuggest () {
-    let provenWeapons = this.getWeaponsOfClueState(clueStates.PROVEN);
-    if (provenWeapons.length === 1) {
-      return provenWeapons[0];
+    if (!!this.accusation.weapon) {
+      return this.accusation.weapon;
     }
     let possibleWeapons = this.getWeaponsNotOfClueState(clueStates.DISPROVEN);
     let rand = Math.random() * possibleWeapons.length;
