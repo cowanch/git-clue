@@ -240,6 +240,9 @@ export default {
     // Given a position and a target room, find the door space with the least number of spaces to traverse
     // Sometimes a room will have more than one door, so knowing which door is closest can help build the shortest path
     findClosestDoorSpace (position, room) {
+      if (this.doorSpaces[room].some(space => this.coordinatesEqual(position, space))) {
+        return position;
+      }
       let closestSpace = this.doorSpaces[room].reduce((closest, space) => {
         // If the number of spaces between is 0, this player is already on this door space
         let spaces1 = this.findSpacesBetween(position, closest);

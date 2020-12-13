@@ -3,10 +3,18 @@
 **/
 export const actions = {
   ROLL: 'roll',
+  SUGGEST: 'suggest',
   PASSAGE: 'passage',
+  ACCUSE: 'accuse',
   END: 'end'
 };
 
 export const notepadStates = {
-  DISPROVED: 'disproved'
+  OWNED: 'owned',
+  NOT_OWNED: 'not_owned'
+};
+
+export const clueStates = {
+  DISPROVEN: 'disproven',
+  PROVEN: 'proven'
 };

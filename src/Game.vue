@@ -222,8 +222,12 @@ export default {
         let currentPlayer = this.turnOrder[turnIter];
         let cards = this.playerCards[currentPlayer];
         let disprovingCards = this.getDisprovingCards(cards, suggestion);
-        if (disprovingCards.length > 0) {
+        let canDisprove = disprovingCards.length > 0;
+        // CPU players witness disprovals
+        Object.values(this.cpuPlayers).forEach(cpu => cpu.witnessDisproval(currentPlayer, canDisprove, suggestion));
+        if (canDisprove) {
           disproved = true;
+          this.turnPhase = this.phases.DISPROVE;
           this.addMessage(`${this.suspects[currentPlayer]} can disprove the suggestion`);
           this.handleDisprovingCards(currentPlayer, disprovingCards);
           break;
@@ -250,16 +254,18 @@ export default {
       }
     },
     handleDisprovingCards (player, cards) {
-      if (this.isHumanPlayer(player)) {
-        this.turnPhase = this.phases.DISPROVE;
-        this.cardSelection = cards;
-      } else if (this.isCpuPlayer(player)) {
-        let rand = Math.floor(Math.random() * cards.length);
-        let card = cards[rand];
-        if (this.isHumanPlayer(this.turnPlayer)) {
-          this.addMessage(`${this.suspects[player]} reveals ${this.getCardText(card)}`);
+      if (this.turnPhase === this.phases.DISPROVE) {
+        if (this.isHumanPlayer(player)) {
+          this.cardSelection = cards;
+        } else if (this.isCpuPlayer(player)) {
+          let card = this.cpuPlayers[player].chooseCardToReveal(cards);
+          if (this.isHumanPlayer(this.turnPlayer)) {
+            this.addMessage(`${this.suspects[player]} reveals ${this.getCardText(card)}`);
+          } else if (this.isCpuPlayer(this.turnPlayer)) {
+            this.turnCpuPlayer.recordRevealedCard(player, card);
+          }
+          this.turnPhase = this.phases.END;
         }
-        this.turnPhase = this.phases.END;
       }
     },
     getDisprovingCards (cards, suggestion) {
@@ -278,8 +284,10 @@ export default {
     },
     disprovePhase (card) {
       if (this.turnPhase === this.phases.DISPROVE) {
-        // Do something here handling CPU users receiving a clue
         this.cardSelection = [];
+        if (this.isCpuPlayer(this.turnPlayer)) {
+          this.turnCpuPlayer.recordRevealedCard(this.humanPlayer, card);
+        }
         this.addMessage(`${this.suspects[this.humanPlayer]} reveals ${this.getCardText(card)} to ${this.suspects[this.turnPlayer]}`);
         this.turnPhase = this.phases.END;
       }
@@ -400,6 +408,7 @@ export default {
         this.addMessage('Make a suggestion');
       }
       if (this.isCpuPlayer(this.turnPlayer)) {
+        this.turnCpuPlayer.setCoordinates(this.playerCoordinates[this.turnPlayer]);
         this.cpuAction = this.turnCpuPlayer.getNextMove(phase);
       }
     }
