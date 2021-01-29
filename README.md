@@ -1,4 +1,4 @@
-# vue-clue
+# VueClue
 
 ## CPU logic
 
